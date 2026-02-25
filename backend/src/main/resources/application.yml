@@ -1,0 +1,100 @@
+# Spring Boot 应用配置
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: fundwise-backend
+  
+  # 开发时启用热部署
+  devtools:
+    add-properties: false
+  
+  # Jackson JSON 配置
+  jackson:
+    date-format: yyyy-MM-dd
+    time-zone: Asia/Shanghai
+    default-property-inclusion: NON_NULL
+  
+  # 数据库配置（示例，根据实际修改）
+  datasource:
+    url: jdbc:mysql://localhost:3306/fundwise_backtest?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: password123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  
+  # JPA 配置
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    hibernate:
+      ddl-auto: validate  # 生产环境用 validate，开发可用 update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc.batch_size: 20
+        order_inserts: true
+        order_updates: true
+    open-in-view: false
+
+# 应用配置
+app:
+  # 数据配置
+  data:
+    # 默认回测起始日期（3年前）
+    default-backtest-years: 3
+    
+  # 推荐算法配置
+  recommendation:
+    # 默认风险等级映射
+    risk-levels:
+      conservative:
+        max-drawdown: 0.05
+        stock-ratio: 0.2
+      moderate:
+        max-drawdown: 0.10
+        stock-ratio: 0.5
+      aggressive:
+        max-drawdown: 0.20
+        stock-ratio: 0.8
+    
+    # 基金筛选规则
+    fund-filters:
+      min-establishment-years: 3
+      min-fund-size: 2.0  # 亿元
+      max-single-fund-weight: 0.3  # 单基金最大权重
+    
+  # 回测配置
+  backtest:
+    default-fee-rate: 0.0015  # 默认费率 0.15%
+    rebalance-frequency: quarterly  # 调仓频率
+
+# 日志配置
+logging:
+  level:
+    com.fundwise: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/fundwise-backend.log
+    max-size: 10MB
+    max-history: 30
+
+# CORS 配置（前端开发用）
+cors:
+  allowed-origins: "*"
+  allowed-methods: "GET,POST,PUT,DELETE,OPTIONS"
+  allowed-headers: "*"
+  allow-credentials: false
+  max-age: 3600
