@@ -1,0 +1,43 @@
+# Java
+target/
+.classpath
+.project
+.settings/
+*.jar
+*.war
+*.ear
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.env
+.venv
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# 前端
+node_modules/
+dist/
+.parcel-cache/
+
+# 本地配置
+application-local.properties
+application-dev.yml
+
+# 日志
+*.log
+logs/
+
+# 数据文件
+data/
+!data/README.md
+

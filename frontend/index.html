@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基智回测 - 基金投资智能分析工具</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    <!-- Chart.js 用于图表 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- 可选：添加图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-chart-line"></i> 基智回测</h1>
+            <p class="subtitle">三步，找到适合你的基金组合</p>
+        </header>
+
+        <main>
+            <div class="layout">
+                <!-- 左侧：配置面板 -->
+                <aside class="config-panel" id="configPanel">
+                    <h2><i class="fas fa-sliders-h"></i> 投资偏好</h2>
+                    
+                    <div class="input-group">
+                        <label for="initialCapital">
+                            <i class="fas fa-money-bill-wave"></i> 我想投入
+                        </label>
+                        <div class="input-with-unit">
+                            <input type="number" id="initialCapital" value="10000" min="1000" step="1000">
+                            <span class="unit">元</span>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="maxDrawdown">
+                            <i class="fas fa-shield-alt"></i> 我能承受的最大浮亏
+                            <span class="tooltip" title="历史上账户最惨的时候可能亏多少">?</span>
+                        </label>
+                        <select id="maxDrawdown">
+                            <option value="0.05">5% - 非常保守</option>
+                            <option value="0.10" selected>10% - 稳健</option>
+                            <option value="0.15">15% - 适度积极</option>
+                            <option value="0.20">20% - 积极</option>
+                            <option value="unknown">我不清楚，帮我测试</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="investmentPeriod">
+                            <i class="fas fa-calendar-alt"></i> 我打算投资多久
+                        </label>
+                        <select id="investmentPeriod">
+                            <option value="1">1年</option>
+                            <option value="3" selected>3年</option>
+                            <option value="5">5年</option>
+                            <option value="10">10年</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="indexFundOnly">
+                            <i class="fas fa-chart-bar"></i> 仅使用指数基金 (ETF/指数联接)
+                            <span class="tooltip" title="指数基金费率低、透明度高，跟踪特定市场指数">?</span>
+                        </label>
+                    </div>
+
+                    <div class="advanced-options" id="advancedOptions" style="display: none;">
+                        <h3><i class="fas fa-cog"></i> 高级选项</h3>
+                        <div class="input-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="enableRebalancing">
+                                启用季度自动调仓
+                            </label>
+                        </div>
+                    </div>
+
+                    <button class="btn-toggle-advanced" id="toggleAdvanced">
+                        <i class="fas fa-chevron-down"></i> 显示高级选项
+                    </button>
+
+                    <button class="btn-primary" id="runBacktestBtn">
+                        <i class="fas fa-rocket"></i> 开始智能回测
+                    </button>
+
+                    <div class="disclaimer">
+                        <p><i class="fas fa-exclamation-triangle"></i> <strong>重要提示</strong>：历史回测不预示未来表现。基金投资有风险，请谨慎决策。</p>
+                    </div>
+                </aside>
+
+                <!-- 中间：结果可视化 -->
+                <section class="result-visualization" id="resultSection" style="display: none;">
+                    <div class="result-header">
+                        <h2 id="resultTitle">您的智能投资组合分析</h2>
+                        <p id="resultSubtitle" class="result-subtitle">基于您的风险偏好和投资目标</p>
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="navChart"></canvas>
+                    </div>
+
+                    <div class="metrics-dashboard">
+                        <div class="metric-card">
+                            <div class="metric-label">
+                                历史年化收益
+                                <span class="tooltip" title="一笔钱每年平均的增长速度">?</span>
+                            </div>
+                            <div class="metric-value" id="metricAnnualReturn">--</div>
+                            <div class="metric-bar">
+                                <div class="metric-fill" id="metricAnnualReturnBar" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-label">
+                                最大回撤
+                                <span class="tooltip" title="历史上最惨的时候亏了多少">?</span>
+                            </div>
+                            <div class="metric-value" id="metricMaxDrawdown">--</div>
+                            <div class="metric-bar">
+                                <div class="metric-fill negative" id="metricMaxDrawdownBar" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-label">
+                                夏普比率
+                                <span class="tooltip" title="收益的'性价比'，越高越好">?</span>
+                            </div>
+                            <div class="metric-value" id="metricSharpeRatio">--</div>
+                            <div class="metric-bar">
+                                <div class="metric-fill" id="metricSharpeRatioBar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 右侧：智能洞察 -->
+                <aside class="insight-panel" id="insightPanel" style="display: none;">
+                    <div class="panel-section">
+                        <h3><i class="fas fa-star"></i> 推荐组合</h3>
+                        <div class="portfolio-composition" id="portfolioComposition">
+                            <!-- 动态生成组合卡片 -->
+                            <div class="loading">
+                                <i class="fas fa-spinner fa-spin"></i> 正在构建组合...
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel-section">
+                        <h3><i class="fas fa-robot"></i> 智能解读</h3>
+                        <div class="insight-bubble" id="insightBubble">
+                            <!-- 动态生成解读 -->
+                            <p>点击"开始智能回测"，获取个性化分析。</p>
+                        </div>
+                    </div>
+
+                    <div class="panel-section action-buttons">
+                        <button class="btn-secondary" id="savePortfolioBtn">
+                            <i class="fas fa-save"></i> 保存此组合
+                        </button>
+                        <button class="btn-secondary" id="compareBtn">
+                            <i class="fas fa-exchange-alt"></i> 与其他组合对比
+                        </button>
+                        <button class="btn-secondary" id="resetBtn">
+                            <i class="fas fa-redo"></i> 重新配置
+                        </button>
+                    </div>
+                </aside>
+            </div>
+
+            <!-- 初始状态：引导 -->
+            <div class="welcome-guide" id="welcomeGuide">
+                <div class="guide-content">
+                    <h2><i class="fas fa-magic"></i> 如何开始？</h2>
+                    <ol class="guide-steps">
+                        <li><strong>填写偏好</strong>：在左侧设置您的投资金额、风险承受能力和投资期限。</li>
+                        <li><strong>一键分析</strong>：点击"开始智能回测"，系统将为您智能筛选基金并构建组合。</li>
+                        <li><strong>查看结果</strong>：分析净值走势、关键指标，并获得通俗易懂的解读。</li>
+                    </ol>
+                    <div class="guide-tip">
+                        <i class="fas fa-lightbulb"></i> <strong>小贴士</strong>：您可以勾选"仅使用指数基金"来构建透明、低成本的组合。
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>基智回测 &copy; 2026 | 投资有风险，入市需谨慎 | 数据来源：公开市场数据</p>
+            <p class="footer-links">
+                <a href="#" id="aboutLink">关于我们</a> | 
+                <a href="#" id="disclaimerLink">免责声明</a> | 
+                <a href="#" id="apiLink">开发者API</a>
+            </p>
+        </footer>
+    </div>
+
+    <!-- 模态框：关于 -->
+    <div class="modal" id="aboutModal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>关于基智回测</h2>
+            <p>这是一个开源的中国公募基金智能回测与组合推荐工具，旨在帮助个人投资者通过数据辅助决策。</p>
+            <p>功能特点：</p>
+            <ul>
+                <li>极简三步操作，快速获得个性化组合建议</li>
+                <li>智能算法筛选基金，优化资产配置</li>
+                <li>清晰的可视化结果和专业指标解读</li>
+                <li>支持指数基金专门筛选</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
