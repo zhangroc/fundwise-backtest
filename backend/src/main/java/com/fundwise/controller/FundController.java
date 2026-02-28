@@ -58,6 +58,9 @@ public class FundController {
             org.springframework.data.jpa.domain.Specification<Fund> spec = (root, query, cb) -> {
                 List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
                 
+                // 必须有净值数据
+                predicates.add(cb.greaterThan(root.get("navRecordCount"), 0));
+                
                 // 基金类型筛选
                 if (fundType != null && !"all".equals(fundType)) {
                     predicates.add(cb.like(root.get("fundType"), "%" + fundType + "%"));
@@ -166,7 +169,9 @@ public class FundController {
         try {
             List<Fund> funds = fundRepository.findByFundNameContaining(keyword);
             
+            // 只返回有净值数据的基金
             List<Map<String, Object>> results = funds.stream()
+                .filter(f -> f.getNavRecordCount() != null && f.getNavRecordCount() > 0)
                 .limit(limit)
                 .map(this::convertFundToMap)
                 .collect(Collectors.toList());

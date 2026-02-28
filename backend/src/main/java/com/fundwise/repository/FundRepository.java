@@ -67,4 +67,16 @@ public interface FundRepository extends JpaRepository<Fund, String>, org.springf
      * 根据基金代码查询
      */
     java.util.Optional<Fund> findByFundCode(String fundCode);
+    
+    /**
+     * 查询有净值数据的基金（navRecordCount > 0）
+     */
+    @Query("SELECT f FROM Fund f WHERE f.navRecordCount > 0")
+    List<Fund> findFundsWithNavData();
+    
+    /**
+     * 查询有净值数据的基金（分页）
+     */
+    @Query("SELECT f FROM Fund f WHERE f.navRecordCount > 0")
+    Page<Fund> findFundsWithNavData(Pageable pageable);
 }

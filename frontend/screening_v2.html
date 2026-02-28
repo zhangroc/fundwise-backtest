@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基金筛选 - 基智回测</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="lib/water.css">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="lib/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --success-color: #4cc9f0;
+            --warning-color: #f8961e;
+            --danger-color: #f72585;
+            --light-bg: #f8f9fa;
+            --border-color: #dee2e6;
+            --text-secondary: #6c757d;
+            --radius: 8px;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: var(--radius);
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        header h1 {
+            margin: 0;
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        header .subtitle {
+            color: var(--text-secondary);
+            margin: 0.5rem 0 0 0;
+            font-size: 0.95rem;
+        }
+        
+        .header-nav {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .header-nav a {
+            color: var(--primary-color);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            transition: all 0.2s;
+        }
+        
+        .header-nav a:hover {
+            background: var(--light-bg);
+        }
+        
+        .header-nav a.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        /* 改进的布局：顶部筛选栏 */
+        .screening-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        /* 筛选面板 - 顶部横向布局 */
+        .filter-panel {
+            background: white;
+            border-radius: var(--radius);
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .filter-panel .filter-sections-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            align-items: flex-end;
+        }
+        
+        .filter-panel .filter-section {
+            flex: 1;
+            min-width: 180px;
+            max-width: 250px;
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+            border-right: 1px solid var(--border-color);
+            padding-right: 1.5rem;
+        }
+        
+        .filter-panel .filter-section:last-of-type {
+            border-right: none;
+            padding-right: 0;
+        }
+        
+        .filter-panel .filter-section h3 {
+            font-size: 0.85rem;
+            color: var(--primary-color);
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .filter-panel .filter-group {
+            margin-bottom: 0.75rem;
+        }
+        
+        .filter-panel .filter-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .filter-panel .filter-group label {
+            font-size: 0.8rem;
+            margin-bottom: 0.35rem;
+        }
+        
+        .filter-panel .btn-primary {
+            width: auto;
+            padding: 0.6rem 1.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .filter-panel .btn-reset {
+            width: auto;
+            padding: 0.6rem 1rem;
+            margin-top: 0;
+            margin-left: 0.5rem;
+        }
+        
+        .filter-panel h2 {
+            margin: 0 0 1rem 0;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--primary-color);
+        }
+        
+        .filter-section {
+            margin-bottom: 1.25rem;
+            padding-bottom: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .filter-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .filter-section h3 {
+            font-size: 1rem;
+            color: #333;
+            margin: 0 0 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .filter-group {
+            margin-bottom: 1rem;
+        }
+        
+        .filter-group label {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .filter-group input[type="number"],
+        .filter-group select {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+        
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        .filter-group .input-with-unit {
+            position: relative;
+        }
+        
+        .filter-group .input-with-unit input {
+            padding-right: 3rem;
+        }
+        
+        .filter-group .input-with-unit .unit {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .checkbox-label input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            width: 100%;
+            padding: 0.85rem;
+            background: linear-gradient(135deg, var(--primary-color), #3a56d4);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-reset {
+            width: 100%;
+            padding: 0.75rem;
+            background: white;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 0.75rem;
+        }
+        
+        .btn-reset:hover {
+            background: var(--light-bg);
+        }
+        
+        /* 结果区域 */
+        .results-panel {
+            background: white;
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .results-header h2 {
+            margin: 0;
+            color: #333;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .results-count {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .results-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        .btn-secondary {
+            padding: 0.6rem 1rem;
+            background: white;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-secondary:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        /* 基金表格 */
+        .fund-table-container {
+            overflow-x: auto;
+        }
+        
+        table.fund-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+        
+        table.fund-table thead {
+            background: var(--light-bg);
+        }
+        
+        table.fund-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid var(--border-color);
+            white-space: nowrap;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        table.fund-table th:hover {
+            background: #e9ecef;
+        }
+        
+        table.fund-table th .sort-icon {
+            margin-left: 0.5rem;
+            opacity: 0.3;
+        }
+        
+        table.fund-table th.sorted .sort-icon {
+            opacity: 1;
+            color: var(--primary-color);
+        }
+        
+        table.fund-table tbody tr {
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        
+        table.fund-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        table.fund-table td {
+            padding: 1rem;
+            vertical-align: middle;
+        }
+        
+        .fund-code {
+            font-family: monospace;
+            background: var(--light-bg);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: var(--primary-color);
+        }
+        
+        .fund-name {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .fund-type-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .fund-type-badge.股票型 {
+            background: #ffe5e5;
+            color: #d63031;
+        }
+        
+        .fund-type-badge.混合型 {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .fund-type-badge.债券型 {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+        
+        .fund-type-badge.指数型 {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+        
+        .fund-type-badge.QDII {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+        
+        .positive {
+            color: #d63031;
+            font-weight: 600;
+        }
+        
+        .negative {
+            color: #388e3c;
+            font-weight: 600;
+        }
+        
+        .risk-level {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .risk-level.低风险 {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+        
+        .risk-level.中低风险 {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .risk-level.中风险 {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+        
+        .risk-level.中高风险 {
+            background: #ffebee;
+            color: #d63031;
+        }
+        
+        .risk-level.高风险 {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+        
+        /* 加载状态 */
+        .loading-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+        
+        .loading-state i {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            color: #dee2e6;
+            margin-bottom: 1rem;
+        }
+        
+        .empty-state h3 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* 分页 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .pagination button {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            background: white;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .pagination button:hover:not(:disabled) {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .pagination .page-info {
+            padding: 0.5rem 1rem;
+            color: var(--text-secondary);
+        }
+        
+        /* 响应式 */
+        @media (max-width: 1024px) {
+            .screening-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-panel {
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="topNav"></div>
+    <script>fetch("includes/nav.html").then(r=>r.text()).then(html=>document.getElementById("topNav").innerHTML=html);</script>
+    <div class="container">
+        <header>
+            <div>
+                <h1><i class="fas fa-filter"></i> 基金筛选</h1>
+                <p class="subtitle">多维度筛选，发现优质标的</p>
+            </div>
+            <nav class="header-nav">
+                <a href="index.html">首页</a>
+                <a href="screening.html" class="active">基金筛选</a>
+                <a href="#">我的组合</a>
+                <a href="#">帮助中心</a>
+            </nav>
+        </header>
+
+        <div class="screening-layout">
+            <!-- 左侧筛选面板 -->
+            <aside class="filter-panel">
+                <h2><i class="fas fa-sliders-h"></i> 筛选条件</h2>
+                
+                <form id="filterForm">
+                    <div class="filter-sections-wrapper">
+                    <!-- 统计时间段 -->
+                    <div class="filter-section">
+                        <h3><i class="fas fa-calendar-alt"></i> 统计时间段</h3>
+                        <div class="filter-group">
+                            <label for="timePeriod">收益统计周期</label>
+                            <select id="timePeriod" name="timePeriod">
+                                <option value="1y">最近 1 年</option>
+                                <option value="6m">最近 6 个月</option>
+                                <option value="3y">最近 3 年</option>
+                                <option value="5y">最近 5 年</option>
+                                <option value="ytd">今年以来</option>
+                                <option value="all">成立以来</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 基金类型 -->
+                    <div class="filter-section">
+                        <h3><i class="fas fa-shapes"></i> 基金类型</h3>
+                        <div class="filter-group">
+                            <label for="fundType">类型筛选</label>
+                            <select id="fundType" name="fundType">
+                                <option value="all">全部类型</option>
+                                <option value="股票型">股票型</option>
+                                <option value="混合型">混合型</option>
+                                <option value="债券型">债券型</option>
+                                <option value="指数型">指数型</option>
+                                <option value="QDII">QDII</option>
+                                <option value="货币型">货币型</option>
+                            </select>
+                        </div>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="indexFundOnly" name="indexFundOnly">
+                                <i class="fas fa-chart-line"></i> 仅指数基金
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="etfOnly" name="etfOnly">
+                                <i class="fas fa-exchange-alt"></i> 仅 ETF
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 业绩指标 -->
+                    <div class="filter-section">
+                        <h3><i class="fas fa-chart-line"></i> 业绩指标</h3>
+                        <div class="filter-group">
+                            <label for="minReturn">最低收益率 (%)</label>
+                            <div class="input-with-unit">
+                                <input type="number" id="minReturn" name="minReturn" 
+                                       placeholder="如：5" step="0.1" min="-100" max="1000">
+                                <span class="unit">%</span>
+                            </div>
+                        </div>
+                        <div class="filter-group">
+                            <label for="maxDrawdown">最大回撤 (%)</label>
+                            <div class="input-with-unit">
+                                <input type="number" id="maxDrawdown" name="maxDrawdown" 
+                                       placeholder="如：-20" step="0.1" min="-100" max="0">
+                                <span class="unit">%</span>
+                            </div>
+                            <small style="color: var(--text-secondary); font-size: 0.8rem;">
+                                <i class="fas fa-info-circle"></i> 填写负值，如 -20 表示最大回撤不超过 20%
+                            </small>
+                        </div>
+                        <div class="filter-group">
+                            <label for="minSharpe">最低夏普比率</label>
+                            <input type="number" id="minSharpe" name="minSharpe" 
+                                   placeholder="如：0.5" step="0.1" min="-10" max="100">
+                            <small style="color: var(--text-secondary); font-size: 0.8rem;">
+                                <i class="fas fa-info-circle"></i> 夏普比率越高，收益风险性价比越好
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- 基金规模 -->
+                    <div class="filter-section">
+                        <h3><i class="fas fa-coins"></i> 基金规模</h3>
+                        <div class="filter-group">
+                            <label for="minSize">最小规模 (亿元)</label>
+                            <input type="number" id="minSize" name="minSize" 
+                                   placeholder="如：2" step="0.1" min="0">
+                        </div>
+                        <div class="filter-group">
+                            <label for="maxSize">最大规模 (亿元)</label>
+                            <input type="number" id="maxSize" name="maxSize" 
+                                   placeholder="如：100" step="1" min="0">
+                        </div>
+                    </div>
+
+                    <!-- 成立时间 -->
+                    <div class="filter-section">
+                        <h3><i class="fas fa-history"></i> 成立时间</h3>
+                        <div class="filter-group">
+                            <label for="minYears">最低成立年限</label>
+                            <div class="input-with-unit">
+                                <input type="number" id="minYears" name="minYears" 
+                                       placeholder="如：3" step="1" min="0" max="50">
+                                <span class="unit">年</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 排序方式 -->
+                    <div class="filter-section">
+                        <h3><i class="fas fa-sort"></i> 排序方式</h3>
+                        <div class="filter-group">
+                            <label for="sortBy">按</label>
+                            <select id="sortBy" name="sortBy">
+                                <option value="return">收益率</option>
+                                <option value="sharpe">夏普比率</option>
+                                <option value="drawdown">最大回撤</option>
+                                <option value="size">基金规模</option>
+                                <option value="age">成立年限</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="sortOrder">顺序</label>
+                            <select id="sortOrder" name="sortOrder">
+                                <option value="desc">降序</option>
+                                <option value="asc">升序</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 返回数量 -->
+                    <div class="filter-section">
+                        <h3><i class="fas fa-list"></i> 返回数量</h3>
+                        <div class="filter-group">
+                            <label for="pageSize">每页显示</label>
+                            <select id="pageSize" name="pageSize">
+                                <option value="10">10 条</option>
+                                <option value="20" selected>20 条</option>
+                                <option value="50">50 条</option>
+                                <option value="100">100 条</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 操作按钮 -->
+                    <div class="filter-section" style="border-right: none; flex: 0 0 auto; min-width: auto;">
+                        <button type="submit" class="btn-primary" id="searchBtn">
+                            <i class="fas fa-search"></i> 开始筛选
+                        </button>
+                        <button type="button" class="btn-reset" id="resetBtn">
+                            <i class="fas fa-undo"></i> 重置条件
+                        </button>
+                    </div>
+                    </div>
+                </form>
+            </aside>
+
+            <!-- 右侧结果面板 -->
+            <main class="results-panel">
+                <div class="results-header">
+                    <h2>
+                        <i class="fas fa-table"></i> 
+                        筛选结果
+                        <span class="results-count" id="resultsCount">0</span>
+                    </h2>
+                    <div class="results-actions">
+                        <button class="btn-secondary" id="exportBtn">
+                            <i class="fas fa-download"></i> 导出 Excel
+                        </button>
+                        <button class="btn-secondary" id="compareBtn">
+                            <i class="fas fa-exchange-alt"></i> 对比选中
+                        </button>
+                    </div>
+                </div>
+
+                <div id="resultsContent">
+                    <!-- 初始状态 -->
+                    <div class="empty-state" id="emptyState">
+                        <i class="fas fa-search"></i>
+                        <h3>设置筛选条件</h3>
+                        <p>在左侧设置您的筛选条件，然后点击"开始筛选"</p>
+                    </div>
+
+                    <!-- 加载状态 -->
+                    <div class="loading-state" id="loadingState" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>正在筛选基金数据...</p>
+                    </div>
+
+                    <!-- 结果表格 -->
+                    <div class="fund-table-container" id="tableContainer" style="display: none;">
+                        <table class="fund-table">
+                            <thead>
+                                <tr>
+                                    <th><input type="checkbox" id="selectAll"></th>
+                                    <th>基金代码</th>
+                                    <th>基金名称</th>
+                                    <th>类型</th>
+                                    <th>收益率 <i class="fas fa-sort sort-icon"></i></th>
+                                    <th>最大回撤 <i class="fas fa-sort sort-icon"></i></th>
+                                    <th>夏普比率 <i class="fas fa-sort sort-icon"></i></th>
+                                    <th>基金规模 <i class="fas fa-sort sort-icon"></i></th>
+                                    <th>成立年限 <i class="fas fa-sort sort-icon"></i></th>
+                                    <th>风险等级</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fundTableBody">
+                                <!-- 动态生成 -->
+                            </tbody>
+                        </table>
+
+                        <div class="pagination" id="pagination">
+                            <button id="prevPage" disabled>
+                                <i class="fas fa-chevron-left"></i> 上一页
+                            </button>
+                            <span class="page-info" id="pageInfo">第 1 / 1 页</span>
+                            <button id="nextPage" disabled>
+                                下一页 <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <footer style="text-align: center; padding: 2rem; color: white; margin-top: 2rem;">
+            <p>基智回测 &copy; 2026 | 投资有风险，入市需谨慎</p>
+        </footer>
+    </div>
+
+    <script src="js/screening.js"></script>
+</body>
+</html>

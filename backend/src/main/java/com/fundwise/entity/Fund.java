@@ -45,6 +45,15 @@ public class Fund {
     @Column(name = "total_assets")
     private Double totalAssets; // 基金规模（亿元）
     
+    @Column(name = "nav_record_count")
+    private Integer navRecordCount = 0; // 净值记录数
+    
+    @Column(name = "nav_start_date")
+    private LocalDate navStartDate; // 净值开始日期
+    
+    @Column(name = "nav_end_date")
+    private LocalDate navEndDate; // 净值结束日期
+    
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     
@@ -101,6 +110,15 @@ public class Fund {
     
     public Double getTotalAssets() { return totalAssets; }
     public void setTotalAssets(Double totalAssets) { this.totalAssets = totalAssets; }
+    
+    public Integer getNavRecordCount() { return navRecordCount; }
+    public void setNavRecordCount(Integer navRecordCount) { this.navRecordCount = navRecordCount; }
+    
+    public LocalDate getNavStartDate() { return navStartDate; }
+    public void setNavStartDate(LocalDate navStartDate) { this.navStartDate = navStartDate; }
+    
+    public LocalDate getNavEndDate() { return navEndDate; }
+    public void setNavEndDate(LocalDate navEndDate) { this.navEndDate = navEndDate; }
     
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
