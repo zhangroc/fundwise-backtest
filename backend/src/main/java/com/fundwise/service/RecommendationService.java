@@ -12,9 +12,12 @@ import java.math.RoundingMode;
 public class RecommendationService {
     
     private final FundRepository fundRepository;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
     
-    public RecommendationService(FundRepository fundRepository) {
+    public RecommendationService(FundRepository fundRepository, 
+                                org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
         this.fundRepository = fundRepository;
+        this.jdbcTemplate = jdbcTemplate;
     }
     
     /**
@@ -128,6 +131,7 @@ public class RecommendationService {
                 .filter(f -> f.getFundType() != null && !f.getFundType().isEmpty())
                 .filter(f -> f.getTotalAssets() != null && f.getTotalAssets() >= 2.0) // 至少2亿规模
                 .filter(f -> isFundSuitableForPeriod(f, investmentPeriod)) // 投资期限适配性
+                .filter(f -> hasNavData(f.getFundCode())) // 确保有净值数据
                 .sorted(Comparator.comparing(Fund::getTotalAssets).reversed()) // 按规模降序
                 .limit(100) // 取前100只
                 .collect(Collectors.toList());
@@ -136,6 +140,19 @@ public class RecommendationService {
     /**
      * 判断基金是否适合投资期限
      */
+    /**
+     * 检查基金是否有净值数据
+     */
+    private boolean hasNavData(String fundCode) {
+        try {
+            String sql = "SELECT COUNT(*) FROM fund_nav WHERE fund_code = ? LIMIT 1";
+            Integer count = jdbcTemplate.queryForObject(sql, Integer.class, fundCode);
+            return count != null && count > 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     private boolean isFundSuitableForPeriod(Fund fund, int investmentPeriod) {
         if (fund.getEstablishmentDate() == null) {
             return true; // 没有成立日期信息，默认适合
