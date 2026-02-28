@@ -60,7 +60,7 @@ public class BacktestService {
         // 获取所有持仓基金代码和权重
         Map<String, Double> fundWeights = new HashMap<>();
         for (PortfolioHolding holding : holdings) {
-            String fundCode = holding.getFund().getFundCode();
+            String fundCode = holding.getFundCode();
             Double weight = holding.getTargetWeight().doubleValue();
             fundWeights.put(fundCode, weight);
         }

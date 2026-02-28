@@ -25,12 +25,12 @@ public interface PortfolioHoldingRepository extends JpaRepository<PortfolioHoldi
     /**
      * 查询组合的特定持仓
      */
-    Optional<PortfolioHolding> findByPortfolioIdAndFundFundCode(Long portfolioId, String fundCode);
+    Optional<PortfolioHolding> findByPortfolioIdAndFundCode(Long portfolioId, String fundCode);
     
     /**
      * 检查组合中是否已存在某基金
      */
-    boolean existsByPortfolioIdAndFundFundCode(Long portfolioId, String fundCode);
+    boolean existsByPortfolioIdAndFundCode(Long portfolioId, String fundCode);
     
     /**
      * 删除组合的所有持仓
@@ -42,5 +42,5 @@ public interface PortfolioHoldingRepository extends JpaRepository<PortfolioHoldi
      * 删除组合的特定持仓
      */
     @Transactional
-    void deleteByPortfolioIdAndFundFundCode(Long portfolioId, String fundCode);
+    void deleteByPortfolioIdAndFundCode(Long portfolioId, String fundCode);
 }

@@ -136,7 +136,10 @@ public class PortfolioService {
         for (PortfolioHolding holding : sourceHoldings) {
             PortfolioHolding newHolding = new PortfolioHolding();
             newHolding.setPortfolio(newPortfolio);
-            newHolding.setFund(holding.getFund());
+            newHolding.setFundCode(holding.getFundCode());
+            newHolding.setFundName(holding.getFundName());
+            newHolding.setFundType(holding.getFundType());
+            newHolding.setRiskLevel(holding.getRiskLevel());
             newHolding.setTargetWeight(holding.getTargetWeight());
             holdingRepository.save(newHolding);
         }
@@ -153,25 +156,17 @@ public class PortfolioService {
         Portfolio portfolio = portfolioRepository.findById(portfolioId)
             .orElseThrow(() -> new RuntimeException("组合不存在，ID: " + portfolioId));
         
-        // 查找基金，如果不存在则创建
-        Fund fund = fundRepository.findByFundCode(fundCode)
-            .orElseGet(() -> {
-                Fund newFund = new Fund();
-                newFund.setFundCode(fundCode);
-                newFund.setFundName(fundName);
-                newFund.setFundType(type);
-                newFund.setRiskLevel(riskLevel);
-                return fundRepository.save(newFund);
-            });
-        
         // 检查是否已存在
-        if (holdingRepository.existsByPortfolioIdAndFundFundCode(portfolioId, fundCode)) {
+        if (holdingRepository.existsByPortfolioIdAndFundCode(portfolioId, fundCode)) {
             throw new RuntimeException("该基金已在组合中");
         }
         
         PortfolioHolding holding = new PortfolioHolding();
         holding.setPortfolio(portfolio);
-        holding.setFund(fund);
+        holding.setFundCode(fundCode);
+        holding.setFundName(fundName);
+        holding.setFundType(type);
+        holding.setRiskLevel(riskLevel);
         holding.setTargetWeight(BigDecimal.valueOf(targetWeight));
         
         holdingRepository.save(holding);
@@ -212,7 +207,7 @@ public class PortfolioService {
      * 更新持仓权重
      */
     public void updateHoldingWeight(Long portfolioId, String fundCode, Double targetWeight) {
-        PortfolioHolding holding = holdingRepository.findByPortfolioIdAndFundFundCode(portfolioId, fundCode)
+        PortfolioHolding holding = holdingRepository.findByPortfolioIdAndFundCode(portfolioId, fundCode)
             .orElseThrow(() -> new RuntimeException("持仓不存在"));
         
         holding.setTargetWeight(BigDecimal.valueOf(targetWeight));
@@ -223,10 +218,10 @@ public class PortfolioService {
      * 删除持仓
      */
     public void removeHolding(Long portfolioId, String fundCode) {
-        if (!holdingRepository.existsByPortfolioIdAndFundFundCode(portfolioId, fundCode)) {
+        if (!holdingRepository.existsByPortfolioIdAndFundCode(portfolioId, fundCode)) {
             throw new RuntimeException("持仓不存在");
         }
-        holdingRepository.deleteByPortfolioIdAndFundFundCode(portfolioId, fundCode);
+        holdingRepository.deleteByPortfolioIdAndFundCode(portfolioId, fundCode);
     }
     
     /**

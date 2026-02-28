@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>同类对比 - 基智回测</title>
+    <link rel="stylesheet" href="lib/water.css">
+    <link rel="stylesheet" href="lib/all.min.css">
+    <script src="lib/chart.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --success-color: #4cc9f0;
+            --warning-color: #f8961e;
+            --danger-color: #f72585;
+            --light-bg: #f8f9fa;
+            --border-color: #dee2e6;
+            --text-secondary: #6c757d;
+            --radius: 8px;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        header {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: var(--radius);
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        header h1 { margin: 0; color: var(--primary-color); font-size: 1.5rem; }
+        
+        .back-btn {
+            color: var(--primary-color);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--primary-color);
+            border-radius: var(--radius);
+            transition: all 0.2s;
+        }
+        
+        .back-btn:hover { background: var(--primary-color); color: white; }
+        
+        .card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 1rem;
+        }
+        
+        .card-title { margin: 0; color: #333; font-size: 1.2rem; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+        
+        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        
+        th { background: var(--light-bg); font-weight: 600; color: #333; }
+        
+        tr:hover { background: #f8f9fa; }
+        
+        .highlight-row { background: linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(118,75,162,0.1) 100%); }
+        
+        .highlight-row td { font-weight: 600; }
+        
+        .fund-code {
+            font-family: monospace;
+            background: var(--light-bg);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        .fund-code:hover { text-decoration: underline; }
+        
+        .positive { color: #d63031; font-weight: 600; }
+        .negative { color: #388e3c; font-weight: 600; }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .badge-stock { background: #ffe5e5; color: #d63031; }
+        .badge-mixed { background: #e3f2fd; color: #1976d2; }
+        .badge-bond { background: #e8f5e9; color: #388e3c; }
+        .badge-index { background: #f3e5f5; color: #7b1fa2; }
+        
+        .chart-container { height: 300px; position: relative; }
+        
+        .loading { text-align: center; padding: 3rem; color: var(--text-secondary); }
+        .error { text-align: center; padding: 2rem; color: var(--danger-color); }
+        
+        .metrics-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .metric-box {
+            background: var(--light-bg);
+            padding: 1rem;
+            border-radius: var(--radius);
+            text-align: center;
+        }
+        
+        .metric-label { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.25rem; }
+        .metric-value { font-size: 1.3rem; font-weight: 700; color: var(--primary-color); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-balance-scale"></i> 同类对比</h1>
+            <a href="screening.html" class="back-btn"><i class="fas fa-arrow-left"></i> 返回筛选</a>
+        </header>
+        
+        <div id="content">
+            <div class="loading"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.protocol + '//' + window.location.hostname + ':3389/api';
+        
+        // 从URL获取基金代码
+        const urlParams = new URLSearchParams(window.location.search);
+        const fundCode = urlParams.get('code');
+        
+        if (!fundCode) {
+            document.getElementById('content').innerHTML = '<div class="error">未指定基金代码</div>';
+        } else {
+            loadCompareData(fundCode);
+        }
+        
+        async function loadCompareData(code) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/v1/funds/${code}/compare`);
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.message || '加载失败');
+                }
+                
+                renderComparePage(result.data);
+            } catch (error) {
+                document.getElementById('content').innerHTML = `
+                    <div class="error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>加载失败: ${error.message}</p>
+                        <a href="screening.html" class="back-btn">返回筛选</a>
+                    </div>
+                `;
+            }
+        }
+        
+        async function renderComparePage(data) {
+            const fund = data.fund || {};
+            const peers = data.peers || [];
+            const fundType = data.fundType || '未知类型';
+            
+            // 获取主基金和同类基金的业绩数据
+            const mainPerf = await fetchPerformance(data.fund?.code);
+            const peersWithPerf = [];
+            
+            for (const peer of peers.slice(0, 9)) { // 最多10只对比
+                const perf = await fetchPerformance(peer.code);
+                peersWithPerf.push({ ...peer, performance: perf });
+            }
+            
+            // 计算同类平均值
+            const avgReturn = peersWithPerf.reduce((sum, p) => sum + (p.performance?.totalReturn || 0), 0) / peersWithPerf.length;
+            const avgDrawdown = peersWithPerf.reduce((sum, p) => sum + (p.performance?.maxDrawdown || 0), 0) / peersWithPerf.length;
+            const avgSharpe = peersWithPerf.reduce((sum, p) => sum + (p.performance?.sharpeRatio || 0), 0) / peersWithPerf.length;
+            
+            document.getElementById('content').innerHTML = `
+                <!-- 主基金信息 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-star"></i> 
+                            ${fund.name || '未知基金'} 
+                            <span style="color: var(--text-secondary); font-weight: normal;">(${fund.code})</span>
+                        </h3>
+                        <span class="badge badge-mixed">${fundType}</span>
+                    </div>
+                    <div class="metrics-summary">
+                        <div class="metric-box">
+                            <div class="metric-label">总收益率</div>
+                            <div class="metric-value ${mainPerf?.totalReturn >= 0 ? 'positive' : 'negative'}">${formatPercent(mainPerf?.totalReturn)}</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-label">最大回撤</div>
+                            <div class="metric-value negative">${formatPercent(mainPerf?.maxDrawdown)}</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-label">夏普比率</div>
+                            <div class="metric-value">${formatNumber(mainPerf?.sharpeRatio, 2)}</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-label">同类排名</div>
+                            <div class="metric-value">${calculateRank(mainPerf, peersWithPerf)}/${peersWithPerf.length + 1}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 同类对比表格 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-table"></i> 同类基金对比</h3>
+                        <span style="color: var(--text-secondary);">共 ${peersWithPerf.length + 1} 只基金</span>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>基金代码</th>
+                                <th>基金名称</th>
+                                <th>类型</th>
+                                <th>风险等级</th>
+                                <th>总收益率</th>
+                                <th>最大回撤</th>
+                                <th>夏普比率</th>
+                                <th>规模(亿)</th>
+                                <th>成立年限</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="highlight-row">
+                                <td><a href="detail.html?code=${fund.code}" class="fund-code">${fund.code}</a></td>
+                                <td>${fund.name || '--'}</td>
+                                <td><span class="badge ${getTypeBadge(fund.type)}">${fund.type || '--'}</span></td>
+                                <td>${fund.riskLevel || '--'}</td>
+                                <td class="${mainPerf?.totalReturn >= 0 ? 'positive' : 'negative'}">${formatPercent(mainPerf?.totalReturn)}</td>
+                                <td class="negative">${formatPercent(mainPerf?.maxDrawdown)}</td>
+                                <td>${formatNumber(mainPerf?.sharpeRatio, 2)}</td>
+                                <td>${fund.totalAssets ? fund.totalAssets.toFixed(1) : '--'}</td>
+                                <td>${fund.establishedYears || '--'}年</td>
+                            </tr>
+                            ${peersWithPerf.map(peer => `
+                                <tr>
+                                    <td><a href="detail.html?code=${peer.code}" class="fund-code">${peer.code}</a></td>
+                                    <td>${peer.name || '--'}</td>
+                                    <td><span class="badge ${getTypeBadge(peer.type)}">${peer.type || '--'}</span></td>
+                                    <td>${peer.riskLevel || '--'}</td>
+                                    <td class="${(peer.performance?.totalReturn || 0) >= 0 ? 'positive' : 'negative'}">${formatPercent(peer.performance?.totalReturn)}</td>
+                                    <td class="negative">${formatPercent(peer.performance?.maxDrawdown)}</td>
+                                    <td>${formatNumber(peer.performance?.sharpeRatio, 2)}</td>
+                                    <td>${peer.totalAssets ? peer.totalAssets.toFixed(1) : '--'}</td>
+                                    <td>${peer.establishedYears || '--'}年</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 同类平均对比 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-chart-bar"></i> 与同类平均对比</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="compareChart"></canvas>
+                    </div>
+                </div>
+            `;
+            
+            // 渲染对比图表
+            renderCompareChart(fund, mainPerf, avgReturn, avgDrawdown, avgSharpe);
+        }
+        
+        async function fetchPerformance(code) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/v1/funds/${code}/performance?period=1y`);
+                const result = await response.json();
+                return result.success ? result.data : null;
+            } catch (error) {
+                console.error(`获取业绩失败: ${code}`, error);
+                return null;
+            }
+        }
+        
+        function renderCompareChart(fund, mainPerf, avgReturn, avgDrawdown, avgSharpe) {
+            const ctx = document.getElementById('compareChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['总收益率', '最大回撤', '夏普比率'],
+                    datasets: [
+                        {
+                            label: fund.name || '当前基金',
+                            data: [
+                                (mainPerf?.totalReturn || 0) * 100,
+                                (mainPerf?.maxDrawdown || 0) * 100,
+                                (mainPerf?.sharpeRatio || 0)
+                            ],
+                            backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                            borderColor: 'rgba(102, 126, 234, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: '同类平均',
+                            data: [
+                                avgReturn * 100,
+                                avgDrawdown * 100,
+                                avgSharpe
+                            ],
+                            backgroundColor: 'rgba(118, 75, 162, 0.8)',
+                            borderColor: 'rgba(118, 75, 162, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) label += ': ';
+                                    if (context.dataIndex === 2) {
+                                        label += context.parsed.y.toFixed(2);
+                                    } else {
+                                        label += context.parsed.y.toFixed(2) + '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + (this.chart.data.labels[this.chart.data.labels.length - 1] === '夏普比率' ? '' : '%');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function calculateRank(mainPerf, peers) {
+            if (!mainPerf || !mainPerf.totalReturn) return '--';
+            
+            let rank = 1;
+            for (const peer of peers) {
+                if ((peer.performance?.totalReturn || 0) > mainPerf.totalReturn) {
+                    rank++;
+                }
+            }
+            return rank;
+        }
+        
+        function formatPercent(value) {
+            if (value === null || value === undefined || isNaN(value)) return '--';
+            return (value * 100).toFixed(2) + '%';
+        }
+        
+        function formatNumber(value, decimals = 2) {
+            if (value === null || value === undefined || isNaN(value)) return '--';
+            return value.toFixed(decimals);
+        }
+        
+        function getTypeBadge(type) {
+            if (!type) return 'badge-mixed';
+            if (type.includes('股票')) return 'badge-stock';
+            if (type.includes('债券')) return 'badge-bond';
+            if (type.includes('指数')) return 'badge-index';
+            return 'badge-mixed';
+        }
+    </script>
+</body>
+</html>

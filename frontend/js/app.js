@@ -1,7 +1,7 @@
 // 基智回测 - 前端主应用逻辑
 
-// API 基础URL (开发环境)
-const API_BASE_URL = 'http://192.168.0.2:3389/api';
+// API 基础URL - 自动检测当前主机
+const API_BASE_URL = window.location.protocol + '//' + window.location.hostname + ':3389/api';
 
 // 全局状态
 const AppState = {

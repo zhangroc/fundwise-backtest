@@ -26,7 +26,7 @@ public class FundController {
     }
     
     /**
-     * 筛选基金
+     * 筛选基金 - 使用数据库分页优化性能
      * GET /api/funds/screen
      */
     @GetMapping("/screen")
@@ -48,99 +48,76 @@ public class FundController {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            // 从数据库获取所有基金
-            List<Fund> allFunds = fundRepository.findAll();
+            // 使用分页查询，避免加载全部数据
+            org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(
+                page - 1, 
+                Math.min(pageSize, 100) // 限制最大每页100条
+            );
             
-            // 筛选
-            List<Fund> filteredFunds = allFunds.stream()
-                .filter(fund -> fundType == null || "all".equals(fundType) || 
-                        (fund.getFundType() != null && fund.getFundType().contains(fundType)))
-                .filter(fund -> indexFundOnly == null || !indexFundOnly || 
-                        Boolean.TRUE.equals(fund.getIsIndexFund()))
-                .filter(fund -> minSize == null || fund.getTotalAssets() == null || 
-                        fund.getTotalAssets() >= minSize)
-                .filter(fund -> maxSize == null || fund.getTotalAssets() == null || 
-                        fund.getTotalAssets() <= maxSize)
-                .filter(fund -> minYears == null || fund.getEstablishmentDate() == null || 
-                        Period.between(fund.getEstablishmentDate(), LocalDate.now()).getYears() >= minYears)
+            // 构建查询条件
+            org.springframework.data.jpa.domain.Specification<Fund> spec = (root, query, cb) -> {
+                List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
+                
+                // 基金类型筛选
+                if (fundType != null && !"all".equals(fundType)) {
+                    predicates.add(cb.like(root.get("fundType"), "%" + fundType + "%"));
+                }
+                
+                // 指数基金筛选
+                if (Boolean.TRUE.equals(indexFundOnly)) {
+                    predicates.add(cb.isTrue(root.get("isIndexFund")));
+                }
+                
+                // 规模筛选
+                if (minSize != null) {
+                    predicates.add(cb.greaterThanOrEqualTo(root.get("totalAssets"), minSize));
+                }
+                if (maxSize != null) {
+                    predicates.add(cb.lessThanOrEqualTo(root.get("totalAssets"), maxSize));
+                }
+                
+                // 成立年限筛选
+                if (minYears != null && minYears > 0) {
+                    LocalDate cutoffDate = LocalDate.now().minusYears(minYears);
+                    predicates.add(cb.lessThanOrEqualTo(root.get("establishmentDate"), cutoffDate));
+                }
+                
+                return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+            };
+            
+            // 执行分页查询
+            org.springframework.data.domain.Page<Fund> fundPage = fundRepository.findAll(spec, pageable);
+            
+            // 转换为 Map 并添加模拟指标
+            List<Map<String, Object>> fundsWithMetrics = fundPage.getContent().stream()
+                .map(fund -> {
+                    Map<String, Object> fundData = convertFundToMap(fund);
+                    // 模拟业绩指标（后续接入真实计算）
+                    fundData.put("returnRate", (Math.random() - 0.3) * 0.5);
+                    fundData.put("maxDrawdown", -(Math.random() * 0.3));
+                    fundData.put("sharpeRatio", (Math.random() - 0.5) * 3);
+                    return fundData;
+                })
                 .collect(Collectors.toList());
             
-            // 计算业绩指标（基于真实净值数据）
-            List<Map<String, Object>> fundsWithMetrics = new ArrayList<>();
-            for (Fund fund : filteredFunds) {
-                Map<String, Object> fundData = convertFundToMap(fund);
-                
-                // TODO: 从数据库计算真实指标
-                // 这里先使用模拟数据，后续需要连接 NAV 表计算
-                fundData.put("returnRate", (Math.random() - 0.3) * 0.5);
-                fundData.put("maxDrawdown", -(Math.random() * 0.3));
-                fundData.put("sharpeRatio", (Math.random() - 0.5) * 3);
-                
-                fundsWithMetrics.add(fundData);
-            }
-            
-            // 按收益率筛选
-            if (minReturn != null) {
-                final double minRet = minReturn / 100.0;
-                fundsWithMetrics = fundsWithMetrics.stream()
-                    .filter(f -> {
-                        Double ret = (Double) f.get("returnRate");
-                        return ret != null && ret >= minRet;
-                    })
-                    .collect(Collectors.toList());
-            }
-            
-            // 按最大回撤筛选
-            if (maxDrawdown != null) {
-                final double maxDD = maxDrawdown / 100.0;
-                fundsWithMetrics = fundsWithMetrics.stream()
-                    .filter(f -> {
-                        Double dd = (Double) f.get("maxDrawdown");
-                        return dd != null && dd >= maxDD; // maxDrawdown 是负数
-                    })
-                    .collect(Collectors.toList());
-            }
-            
-            // 按夏普比率筛选
-            if (minSharpe != null) {
-                fundsWithMetrics = fundsWithMetrics.stream()
-                    .filter(f -> {
-                        Double sharpe = (Double) f.get("sharpeRatio");
-                        return sharpe != null && sharpe >= minSharpe;
-                    })
-                    .collect(Collectors.toList());
-            }
-            
-            // 排序
+            // 内存中排序（因为指标是模拟的）
             final String sortField = sortBy != null ? sortBy : "returnRate";
-            final boolean desc = sortOrder == null || "desc".equals(sortOrder);
+            final boolean desc = "desc".equals(sortOrder) || sortOrder == null;
             
             fundsWithMetrics.sort((a, b) -> {
                 Double valA = getMetricValue(a, sortField);
                 Double valB = getMetricValue(b, sortField);
-                
                 if (valA == null) valA = 0.0;
                 if (valB == null) valB = 0.0;
-                
                 return desc ? valB.compareTo(valA) : valA.compareTo(valB);
             });
             
-            // 分页
-            int total = fundsWithMetrics.size();
-            int fromIndex = (page - 1) * pageSize;
-            int toIndex = Math.min(fromIndex + pageSize, total);
-            
-            List<Map<String, Object>> pageData = new ArrayList<>();
-            if (fromIndex < total) {
-                pageData = fundsWithMetrics.subList(fromIndex, toIndex);
-            }
-            
             response.put("success", true);
-            response.put("data", pageData);
-            response.put("total", total);
+            response.put("data", fundsWithMetrics);
+            response.put("total", fundPage.getTotalElements());
             response.put("page", page);
             response.put("pageSize", pageSize);
-            response.put("totalPages", (int) Math.ceil((double) total / pageSize));
+            response.put("totalPages", fundPage.getTotalPages());
             
             return ResponseEntity.ok(response);
             

@@ -20,7 +20,7 @@ spring:
   
   # 数据库配置 - 使用我们创建的fundwise用户
   datasource:
-    url: jdbc:mysql://localhost:3306/fundwise_backtest?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3306/fundwise_backtest?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&allowPublicKeyRetrieval=true
     username: fundwise
     password: password123
     driver-class-name: com.mysql.cj.jdbc.Driver

@@ -1,7 +1,8 @@
 // 基智回测 - 投资组合管理页面逻辑
 
 // API 基础 URL
-const API_BASE_URL = 'http://192.168.0.2:3389/api';
+// API 基础 URL - 自动检测当前主机
+const API_BASE_URL = window.location.protocol + '//' + window.location.hostname + ':3389/api';
 
 // 全局状态
 const PortfolioState = {

@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基金详情 - 基智回测</title>
+    <link rel="stylesheet" href="lib/water.css">
+    <link rel="stylesheet" href="lib/all.min.css">
+    <script src="lib/chart.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --success-color: #4cc9f0;
+            --warning-color: #f8961e;
+            --danger-color: #f72585;
+            --light-bg: #f8f9fa;
+            --border-color: #dee2e6;
+            --text-secondary: #6c757d;
+            --radius: 8px;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        header {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: var(--radius);
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        header h1 { margin: 0; color: var(--primary-color); font-size: 1.5rem; }
+        
+        .back-btn {
+            color: var(--primary-color);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--primary-color);
+            border-radius: var(--radius);
+            transition: all 0.2s;
+        }
+        
+        .back-btn:hover { background: var(--primary-color); color: white; }
+        
+        .card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 1rem;
+        }
+        
+        .card-title { margin: 0; color: #333; font-size: 1.2rem; }
+        
+        .fund-header {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .fund-title-section { flex: 2; min-width: 300px; }
+        
+        .fund-code {
+            font-family: monospace;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            background: var(--light-bg);
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+        }
+        
+        .fund-name { font-size: 1.5rem; font-weight: 600; margin: 0.5rem 0; color: #333; }
+        
+        .fund-badges { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+        
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .badge-type { background: #e3f2fd; color: #1976d2; }
+        .badge-risk { background: #fff3e0; color: #f57c00; }
+        .badge-index { background: #e8f5e9; color: #388e3c; }
+        
+        .fund-quick-stats { flex: 1; min-width: 200px; }
+        
+        .stat-item { margin-bottom: 0.75rem; }
+        .stat-label { font-size: 0.85rem; color: var(--text-secondary); }
+        .stat-value { font-size: 1.1rem; font-weight: 600; color: #333; }
+        .stat-value.positive { color: #d63031; }
+        .stat-value.negative { color: #388e3c; }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        
+        .metric-card {
+            background: var(--light-bg);
+            padding: 1rem;
+            border-radius: var(--radius);
+            text-align: center;
+        }
+        
+        .metric-label { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.25rem; }
+        .metric-value { font-size: 1.5rem; font-weight: 700; color: var(--primary-color); }
+        .metric-value.positive { color: #d63031; }
+        .metric-value.negative { color: #388e3c; }
+        
+        .chart-container { height: 300px; position: relative; }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .info-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); }
+        .info-label { color: var(--text-secondary); }
+        .info-value { font-weight: 500; }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-secondary { background: white; color: var(--primary-color); border: 1px solid var(--primary-color); }
+        
+        .loading { text-align: center; padding: 3rem; color: var(--text-secondary); }
+        .error { text-align: center; padding: 2rem; color: var(--danger-color); }
+        
+        .period-selector { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+        .period-btn { padding: 0.4rem 0.8rem; border: 1px solid var(--border-color); background: white; border-radius: var(--radius); cursor: pointer; }
+        .period-btn.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-chart-line"></i> 基金详情</h1>
+            <a href="screening.html" class="back-btn"><i class="fas fa-arrow-left"></i> 返回筛选</a>
+        </header>
+        
+        <div id="content">
+            <div class="loading"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.protocol + '//' + window.location.hostname + ':3389/api';
+        let navChart = null;
+        
+        // 从URL获取基金代码
+        const urlParams = new URLSearchParams(window.location.search);
+        const fundCode = urlParams.get('code');
+        
+        if (!fundCode) {
+            document.getElementById('content').innerHTML = '<div class="error">未指定基金代码</div>';
+        } else {
+            loadFundDetail(fundCode);
+        }
+        
+        async function loadFundDetail(code) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/v1/funds/${code}/detail`);
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.message || '加载失败');
+                }
+                
+                renderFundDetail(result.data);
+            } catch (error) {
+                document.getElementById('content').innerHTML = `
+                    <div class="error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>加载失败: ${error.message}</p>
+                        <a href="screening.html" class="btn btn-secondary">返回筛选</a>
+                    </div>
+                `;
+            }
+        }
+        
+        function renderFundDetail(fund) {
+            const perf = fund.performance || {};
+            const stats = fund.navStats || {};
+            
+            const returnClass = (perf.totalReturn || 0) >= 0 ? 'positive' : 'negative';
+            
+            document.getElementById('content').innerHTML = `
+                <!-- 基金头部信息 -->
+                <div class="card">
+                    <div class="fund-header">
+                        <div class="fund-title-section">
+                            <span class="fund-code">${fund.code}</span>
+                            <h2 class="fund-name">${fund.name}</h2>
+                            <div class="fund-badges">
+                                <span class="badge badge-type">${fund.type || '未知类型'}</span>
+                                <span class="badge badge-risk"><i class="fas fa-shield-alt"></i> ${fund.riskLevel || '未知风险'}</span>
+                                ${fund.isIndexFund ? '<span class="badge badge-index"><i class="fas fa-chart-line"></i> 指数基金</span>' : ''}
+                            </div>
+                        </div>
+                        <div class="fund-quick-stats">
+                            <div class="stat-item">
+                                <div class="stat-label">总收益率</div>
+                                <div class="stat-value ${returnClass}">${formatPercent(perf.totalReturn)}</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">最大回撤</div>
+                                <div class="stat-value negative">${formatPercent(perf.maxDrawdown)}</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">夏普比率</div>
+                                <div class="stat-value">${formatNumber(perf.sharpeRatio, 2)}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 业绩指标 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-chart-bar"></i> 业绩指标</h3>
+                        <span style="color: var(--text-secondary); font-size: 0.85rem;">
+                            ${perf.startDate || '--'} 至 ${perf.endDate || '--'}
+                        </span>
+                    </div>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-label">总收益</div>
+                            <div class="metric-value ${returnClass}">${formatPercent(perf.totalReturn)}</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">年化收益</div>
+                            <div class="metric-value ${returnClass}">${formatPercent(perf.annualizedReturn)}</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">最大回撤</div>
+                            <div class="metric-value negative">${formatPercent(perf.maxDrawdown)}</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">夏普比率</div>
+                            <div class="metric-value">${formatNumber(perf.sharpeRatio, 2)}</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">年化波动率</div>
+                            <div class="metric-value">${formatPercent(perf.volatility)}</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">胜率</div>
+                            <div class="metric-value">${formatPercent(perf.winRate)}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 净值走势图 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-chart-area"></i> 净值走势</h3>
+                    </div>
+                    <div class="period-selector">
+                        <button class="period-btn" onclick="loadPeriod('1m')">1月</button>
+                        <button class="period-btn" onclick="loadPeriod('3m')">3月</button>
+                        <button class="period-btn active" onclick="loadPeriod('1y')">1年</button>
+                        <button class="period-btn" onclick="loadPeriod('3y')">3年</button>
+                        <button class="period-btn" onclick="loadPeriod('all')">全部</button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="navChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- 基金信息 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-info-circle"></i> 基金信息</h3>
+                    </div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">基金公司</span>
+                            <span class="info-value">${fund.company || '--'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">基金规模</span>
+                            <span class="info-value">${fund.totalAssets ? fund.totalAssets.toFixed(1) + ' 亿' : '--'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">成立日期</span>
+                            <span class="info-value">${fund.establishmentDate || '--'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">成立年限</span>
+                            <span class="info-value">${fund.establishedYears ? fund.establishedYears + ' 年' : '--'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">净值记录数</span>
+                            <span class="info-value">${stats.totalRecords || '--'} 条</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">数据起始</span>
+                            <span class="info-value">${stats.firstDate || '--'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">最新净值</span>
+                            <span class="info-value">${stats.maxNav ? stats.maxNav.toFixed(4) : '--'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">累计净值</span>
+                            <span class="info-value">${stats.maxAccumulatedNav ? stats.maxAccumulatedNav.toFixed(4) : '--'}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 操作按钮 -->
+                <div class="card">
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button class="btn btn-primary" onclick="addToPortfolio('${fund.code}')">
+                            <i class="fas fa-plus"></i> 添加到组合
+                        </button>
+                        <button class="btn btn-secondary" onclick="compareFunds('${fund.code}')">
+                            <i class="fas fa-balance-scale"></i> 同类对比
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // 渲染净值图表
+            renderNavChart(fund.navHistory || []);
+        }
+        
+        function renderNavChart(navHistory) {
+            if (!navHistory || navHistory.length === 0) return;
+            
+            // 反转顺序（从旧到新）
+            const data = [...navHistory].reverse();
+            
+            const ctx = document.getElementById('navChart').getContext('2d');
+            
+            if (navChart) navChart.destroy();
+            
+            navChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.date),
+                    datasets: [{
+                        label: '单位净值',
+                        data: data.map(d => d.nav),
+                        borderColor: '#4361ee',
+                        backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.1,
+                        pointRadius: 0,
+                        pointHoverRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: (ctx) => `净值: ${ctx.parsed.y.toFixed(4)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            ticks: { maxTicksLimit: 10 }
+                        },
+                        y: {
+                            display: true,
+                            ticks: {
+                                callback: (v) => v.toFixed(2)
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        }
+        
+        async function loadPeriod(period) {
+            // 更新按钮状态
+            document.querySelectorAll('.period-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // 加载对应周期的数据
+            try {
+                const response = await fetch(`${API_BASE_URL}/v1/funds/${fundCode}/nav?period=${period}`);
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    renderNavChart(result.data);
+                }
+            } catch (error) {
+                console.error('加载净值失败:', error);
+            }
+        }
+        
+        function addToPortfolio(code) {
+            alert('添加到组合功能开发中...\n基金代码: ' + code);
+        }
+        
+        function compareFunds(code) {
+            window.location.href = `compare.html?code=${code}`;
+        }
+        
+        function formatPercent(value) {
+            if (value === null || value === undefined || isNaN(value)) return '--';
+            return (value * 100).toFixed(2) + '%';
+        }
+        
+        function formatNumber(value, decimals = 2) {
+            if (value === null || value === undefined || isNaN(value)) return '--';
+            return value.toFixed(decimals);
+        }
+    </script>
+</body>
+</html>

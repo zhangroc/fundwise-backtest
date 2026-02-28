@@ -1,7 +1,7 @@
 // 基智回测 - 基金筛选页面逻辑
 
-// API 基础 URL
-const API_BASE_URL = 'http://192.168.0.2:3389/api';
+// API 基础 URL - 自动检测当前主机
+const API_BASE_URL = window.location.protocol + '//' + window.location.hostname + ':3389/api';
 
 // 全局状态
 const ScreeningState = {
@@ -543,8 +543,7 @@ const eventHandlers = {
 // 查看基金详情（全局函数）
 window.viewFundDetail = (fundCode) => {
     console.log('查看基金详情:', fundCode);
-    alert(`基金详情功能开发中...\n基金代码：${fundCode}`);
-    // TODO: 实现基金详情页或弹窗
+    window.location.href = `detail.html?code=${fundCode}`;
 };
 
 // 添加到投资组合（全局函数）
@@ -560,7 +559,7 @@ window.addFundToPortfolio = async (fundCode) => {
     
     try {
         // 获取用户的所有组合
-        const response = await fetch('http://192.168.0.2:3389/api/portfolios');
+        const response = await fetch(`${API_BASE_URL}/portfolios`);
         const result = await response.json();
         
         if (!result.success || !result.data || result.data.length === 0) {
@@ -590,7 +589,7 @@ window.addFundToPortfolio = async (fundCode) => {
         const selectedPortfolio = portfolios[selectedIndex];
         
         // 调用 API 添加到组合
-        const addResponse = await fetch(`http://192.168.0.2:3389/api/portfolios/${selectedPortfolio.id}/holdings`, {
+        const addResponse = await fetch(`window.location.protocol + '//' + window.location.hostname + ':3389/api'/portfolios/${selectedPortfolio.id}/holdings`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

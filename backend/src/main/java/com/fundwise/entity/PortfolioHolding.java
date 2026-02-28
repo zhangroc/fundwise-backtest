@@ -74,7 +74,7 @@ public class PortfolioHolding {
         return "PortfolioHolding{" +
                 "id=" + id +
                 ", portfolioId=" + (portfolio != null ? portfolio.getId() : null) +
-                ", fundCode=" + (fund != null ? fund.getFundCode() : null) +
+                ", fundCode=" + fundCode +
                 ", targetWeight=" + targetWeight +
                 '}';
     }
