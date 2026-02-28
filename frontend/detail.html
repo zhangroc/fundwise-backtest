@@ -164,6 +164,8 @@
     </style>
 </head>
 <body>
+    <div id="topNav"></div>
+    <script>fetch("includes/nav.html").then(r=>r.text()).then(html=>document.getElementById("topNav").innerHTML=html);</script>
     <div class="container">
         <header>
             <h1><i class="fas fa-chart-line"></i> 基金详情</h1>

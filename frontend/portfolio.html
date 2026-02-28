@@ -562,6 +562,8 @@
     </style>
 </head>
 <body>
+    <div id="topNav"></div>
+    <script>fetch("includes/nav.html").then(r=>r.text()).then(html=>document.getElementById("topNav").innerHTML=html);</script>
     <div class="container">
         <header>
             <div>
