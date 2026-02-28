@@ -1,6 +1,7 @@
 package com.fundwise.controller;
 
 import com.fundwise.service.RecommendationService;
+import com.fundwise.service.BacktestService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import java.util.Map;
@@ -14,9 +15,12 @@ import java.util.ArrayList;
 public class RecommendationController {
     
     private final RecommendationService recommendationService;
+    private final BacktestService backtestService;
     
-    public RecommendationController(RecommendationService recommendationService) {
+    public RecommendationController(RecommendationService recommendationService,
+                                     BacktestService backtestService) {
         this.recommendationService = recommendationService;
+        this.backtestService = backtestService;
     }
     
     /**
