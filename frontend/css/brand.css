@@ -1,0 +1,148 @@
+<!-- 基智回测 - 统一品牌VI样式 -->
+<style>
+/* Logo 样式 */
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.logo-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.1rem;
+}
+
+.logo-text {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+/* 侧边栏 Logo */
+.sidebar .sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+    padding: 0.5rem 0;
+}
+
+.sidebar .sidebar-logo .logo-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+}
+
+.sidebar .sidebar-logo .logo-text {
+    font-size: 1.1rem;
+    color: white;
+}
+
+/* 品牌色变量 */
+:root {
+    --brand-primary: #2563eb;
+    --brand-primary-dark: #1d4ed8;
+    --brand-primary-light: #3b82f6;
+    --brand-gradient: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+    --brand-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+}
+
+/* 品牌强调色 */
+.brand-text {
+    background: var(--brand-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* 品牌按钮 */
+.btn-brand {
+    background: var(--brand-gradient);
+    color: white;
+    border: none;
+    box-shadow: var(--brand-shadow);
+}
+
+.btn-brand:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+}
+
+/* 品牌图标背景 */
+.brand-icon-bg {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
+    color: var(--brand-primary);
+}
+
+/* 页面活跃状态指示器 */
+.nav-link.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 24px;
+    background: var(--brand-primary);
+    border-radius: 0 2px 2px 0;
+}
+
+/* 顶部导航徽章 */
+.nav-badge {
+    background: #ef4444;
+    color: white;
+    font-size: 0.65rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 10px;
+    margin-left: 0.35rem;
+}
+
+/* 统一样式调整 */
+.sidebar {
+    background: #0f172a;
+}
+
+.sidebar .sidebar-logo {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.sidebar .nav-link.active {
+    background: var(--brand-primary);
+}
+
+.page-header {
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.page-title {
+    color: #1e293b;
+}
+
+.page-subtitle {
+    color: #64748b;
+}
+
+.card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+.btn-primary {
+    background: var(--brand-primary);
+}
+
+.btn-primary:hover {
+    background: var(--brand-primary-dark);
+}
+</style>
