@@ -80,35 +80,91 @@
             color: white;
         }
         
+        /* 改进的布局：顶部筛选栏 */
         .screening-layout {
-            display: grid;
-            grid-template-columns: 320px 1fr;
+            display: flex;
+            flex-direction: column;
             gap: 1.5rem;
         }
         
-        /* 筛选面板 */
+        /* 筛选面板 - 顶部横向布局 */
         .filter-panel {
             background: white;
             border-radius: var(--radius);
-            padding: 1.5rem;
+            padding: 1.25rem 1.5rem;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            height: fit-content;
-            position: sticky;
-            top: 20px;
+        }
+        
+        .filter-panel .filter-sections-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            align-items: flex-end;
+        }
+        
+        .filter-panel .filter-section {
+            flex: 1;
+            min-width: 180px;
+            max-width: 250px;
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+            border-right: 1px solid var(--border-color);
+            padding-right: 1.5rem;
+        }
+        
+        .filter-panel .filter-section:last-of-type {
+            border-right: none;
+            padding-right: 0;
+        }
+        
+        .filter-panel .filter-section h3 {
+            font-size: 0.85rem;
+            color: var(--primary-color);
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .filter-panel .filter-group {
+            margin-bottom: 0.75rem;
+        }
+        
+        .filter-panel .filter-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .filter-panel .filter-group label {
+            font-size: 0.8rem;
+            margin-bottom: 0.35rem;
+        }
+        
+        .filter-panel .btn-primary {
+            width: auto;
+            padding: 0.6rem 1.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .filter-panel .btn-reset {
+            width: auto;
+            padding: 0.6rem 1rem;
+            margin-top: 0;
+            margin-left: 0.5rem;
         }
         
         .filter-panel h2 {
-            margin: 0 0 1.5rem 0;
+            margin: 0 0 1rem 0;
             color: var(--primary-color);
-            font-size: 1.3rem;
+            font-size: 1.1rem;
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--primary-color);
         }
         
         .filter-section {
-            margin-bottom: 1.5rem;
-            padding-bottom: 1.5rem;
+            margin-bottom: 1.25rem;
+            padding-bottom: 1.25rem;
             border-bottom: 1px solid var(--border-color);
         }
         
@@ -542,6 +598,7 @@
                 <h2><i class="fas fa-sliders-h"></i> 筛选条件</h2>
                 
                 <form id="filterForm">
+                    <div class="filter-sections-wrapper">
                     <!-- 统计时间段 -->
                     <div class="filter-section">
                         <h3><i class="fas fa-calendar-alt"></i> 统计时间段</h3>
@@ -682,12 +739,15 @@
                     </div>
 
                     <!-- 操作按钮 -->
-                    <button type="submit" class="btn-primary" id="searchBtn">
-                        <i class="fas fa-search"></i> 开始筛选
-                    </button>
-                    <button type="button" class="btn-reset" id="resetBtn">
-                        <i class="fas fa-undo"></i> 重置条件
-                    </button>
+                    <div class="filter-section" style="border-right: none; flex: 0 0 auto; min-width: auto;">
+                        <button type="submit" class="btn-primary" id="searchBtn">
+                            <i class="fas fa-search"></i> 开始筛选
+                        </button>
+                        <button type="button" class="btn-reset" id="resetBtn">
+                            <i class="fas fa-undo"></i> 重置条件
+                        </button>
+                    </div>
+                    </div>
                 </form>
             </aside>
 
