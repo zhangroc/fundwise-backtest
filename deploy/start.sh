@@ -38,12 +38,16 @@ check_requirements() {
         error "Java未安装，请安装Java 17或更高版本"
         exit 1
     fi
-    JAVA_VERSION=$(java -version 2>&1 | head -1 | cut -d'\"' -f2 | cut -d'.' -f1)
-    if [[ $JAVA_VERSION -lt 17 ]]; then
-        error "需要Java 17或更高版本，当前版本: $JAVA_VERSION"
+    
+    # 获取Java版本并提取主要版本号
+    JAVA_FULL_VERSION=$(java -version 2>&1 | head -1)
+    JAVA_MAJOR_VERSION=$(java -version 2>&1 | head -1 | grep -oP '(?<=version ")\d+' || echo "0")
+    
+    if [[ $JAVA_MAJOR_VERSION -lt 17 ]]; then
+        error "需要Java 17或更高版本，当前版本: $JAVA_FULL_VERSION"
         exit 1
     fi
-    success "Java版本: $(java -version 2>&1 | head -1 | cut -d'\"' -f2)"
+    success "Java版本: $JAVA_FULL_VERSION"
     
     # 检查Python
     if ! command -v python3 &> /dev/null; then
@@ -72,15 +76,32 @@ check_requirements() {
 install_python_deps() {
     info "检查Python依赖..."
     
+    # 创建虚拟环境目录
+    VENV_DIR="$PROJECT_ROOT/.venv"
+    
+    if [[ ! -d "$VENV_DIR" ]]; then
+        info "创建Python虚拟环境..."
+        python3 -m venv "$VENV_DIR"
+        success "虚拟环境创建完成: $VENV_DIR"
+    else
+        info "使用现有虚拟环境: $VENV_DIR"
+    fi
+    
+    # 激活虚拟环境并安装依赖
+    source "$VENV_DIR/bin/activate"
+    
     if [[ -f "$SCRIPTS_DIR/requirements.txt" ]]; then
         info "安装Python依赖包..."
-        pip3 install -r "$SCRIPTS_DIR/requirements.txt" --quiet
+        pip install -r "$SCRIPTS_DIR/requirements.txt" --quiet
         success "Python依赖安装完成"
     else
         info "安装基础Python包..."
-        pip3 install pymysql pandas akshare --quiet
+        pip install pymysql pandas akshare --quiet
         success "基础Python包安装完成"
     fi
+    
+    # 记录已安装的包
+    pip freeze > "$PROJECT_ROOT/requirements-installed.txt"
 }
 
 # 初始化数据库
@@ -184,9 +205,15 @@ start_frontend() {
         sleep 2
     fi
     
-    # 启动Python HTTP服务器
+    # 启动Python HTTP服务器（使用虚拟环境中的Python）
     info "启动前端HTTP服务器..."
-    nohup python3 -m http.server $FRONTEND_PORT > "$LOGS_DIR/frontend.log" 2>&1 &
+    if [[ -f "$PROJECT_ROOT/.venv/bin/python" ]]; then
+        VENV_PYTHON="$PROJECT_ROOT/.venv/bin/python"
+    else
+        VENV_PYTHON="python3"
+    fi
+    
+    nohup $VENV_PYTHON -m http.server $FRONTEND_PORT > "$LOGS_DIR/frontend.log" 2>&1 &
     FRONTEND_PID=$!
     
     # 等待服务启动

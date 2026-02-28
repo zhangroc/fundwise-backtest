@@ -63,6 +63,12 @@ public class Fund {
     }
     
     // Getters and Setters
+    /**
+     * JPA requires an getId() method when using @GeneratedValue or for consistency
+     * Returns the fundCode as the identifier
+     */
+    public String getId() { return fundCode; }
+    
     public String getFundCode() { return fundCode; }
     public void setFundCode(String fundCode) { this.fundCode = fundCode; }
     

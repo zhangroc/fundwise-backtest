@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>回测分析 - 基智回测</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --success-color: #4cc9f0;
+            --warning-color: #f8961e;
+            --danger-color: #f72585;
+            --light-bg: #f8f9fa;
+            --border-color: #dee2e6;
+            --text-secondary: #6c757d;
+            --radius: 8px;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: var(--radius);
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        header h1 {
+            margin: 0;
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .header-nav {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .header-nav a {
+            color: var(--primary-color);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            transition: all 0.2s;
+        }
+        
+        .header-nav a:hover,
+        .header-nav a.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .backtest-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 1.5rem;
+        }
+        
+        /* 配置面板 */
+        .config-panel {
+            background: white;
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+        
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            font-size: 0.95rem;
+        }
+        
+        .btn-primary {
+            width: 100%;
+            padding: 0.85rem;
+            background: linear-gradient(135deg, var(--primary-color), #3a56d4);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* 结果面板 */
+        .results-panel {
+            background: white;
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1.25rem;
+            border-radius: var(--radius);
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .metric-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        .metric-value.positive {
+            color: #2ecc71;
+        }
+        
+        .metric-value.negative {
+            color: #e74c3c;
+        }
+        
+        .chart-container {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            margin-bottom: 2rem;
+            height: 400px;
+        }
+        
+        .portfolio-info {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            color: #dee2e6;
+            margin-bottom: 1rem;
+        }
+        
+        .loading-state {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+        
+        .loading-state i {
+            font-size: 3rem;
+            color: var(--primary-color);
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1><i class="fas fa-chart-line"></i> 回测分析</h1>
+                <p style="margin: 0.5rem 0 0 0; color: var(--text-secondary);">基于真实历史数据评估投资组合表现</p>
+            </div>
+            <nav class="header-nav">
+                <a href="index.html">首页</a>
+                <a href="screening.html">基金筛选</a>
+                <a href="portfolio.html">投资组合</a>
+                <a href="backtest.html" class="active">回测分析</a>
+            </nav>
+        </header>
+
+        <div class="backtest-layout">
+            <!-- 左侧配置面板 -->
+            <aside class="config-panel">
+                <h2 style="margin-top: 0;"><i class="fas fa-cog"></i> 回测配置</h2>
+                
+                <form id="backtestForm">
+                    <div class="form-group">
+                        <label for="portfolioSelect">选择组合 *</label>
+                        <select id="portfolioSelect" required>
+                            <option value="">请选择投资组合</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="startDate">开始日期 *</label>
+                        <input type="date" id="startDate" required value="2023-01-01">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="endDate">结束日期 *</label>
+                        <input type="date" id="endDate" required value="2024-12-31">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="initialCapital">初始资金 (元)</label>
+                        <input type="number" id="initialCapital" value="10000" min="1000" step="1000">
+                    </div>
+                    
+                    <button type="submit" class="btn-primary" id="runBacktestBtn">
+                        <i class="fas fa-rocket"></i> 开始回测
+                    </button>
+                </form>
+                
+                <div style="margin-top: 2rem; padding: 1rem; background: #e8f5e9; border-radius: var(--radius);">
+                    <h4 style="margin-top: 0; color: #2e7d32;"><i class="fas fa-info-circle"></i> 回测说明</h4>
+                    <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.9rem; color: #555;">
+                        <li>基于真实历史净值数据计算</li>
+                        <li>考虑每日收益率复利效应</li>
+                        <li>计算最大回撤、夏普比率等指标</li>
+                        <li>默认 252 个交易日/年</li>
+                    </ul>
+                </div>
+            </aside>
+
+            <!-- 右侧结果面板 -->
+            <main class="results-panel">
+                <!-- 初始状态 -->
+                <div class="empty-state" id="emptyState">
+                    <i class="fas fa-chart-area"></i>
+                    <h3>配置回测参数</h3>
+                    <p>在左侧选择投资组合并设置回测期间，点击"开始回测"查看分析结果</p>
+                </div>
+
+                <!-- 加载状态 -->
+                <div class="loading-state" id="loadingState" style="display: none;">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>正在运行回测分析...</p>
+                </div>
+
+                <!-- 回测结果 -->
+                <div id="resultsContent" style="display: none;">
+                    <div class="portfolio-info">
+                        <h3 id="resultPortfolioName" style="margin: 0 0 0.5rem 0;">--</h3>
+                        <p id="resultPeriod" style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">--</p>
+                    </div>
+
+                    <!-- 关键指标 -->
+                    <div class="metrics-grid" id="metricsGrid">
+                        <!-- 动态生成 -->
+                    </div>
+
+                    <!-- 净值走势图表 -->
+                    <div class="chart-container">
+                        <canvas id="navChart"></canvas>
+                    </div>
+
+                    <!-- 其他统计 -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                        <div class="metric-card" style="border-left-color: var(--success-color);">
+                            <div class="metric-label">总交易日</div>
+                            <div class="metric-value" id="totalDays">--</div>
+                        </div>
+                        <div class="metric-card" style="border-left-color: var(--warning-color);">
+                            <div class="metric-label">胜率</div>
+                            <div class="metric-value" id="winRate">--</div>
+                        </div>
+                        <div class="metric-card" style="border-left-color: var(--danger-color);">
+                            <div class="metric-label">波动率</div>
+                            <div class="metric-value" id="volatility">--</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <footer style="text-align: center; padding: 2rem; color: white; margin-top: 2rem;">
+            <p>基智回测 &copy; 2026 | 投资有风险，入市需谨慎</p>
+        </footer>
+    </div>
+
+    <script src="js/backtest.js"></script>
+</body>
+</html>

@@ -3,217 +3,697 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>基智回测 - 基金投资智能分析工具</title>
+    <title>基智回测 - 基金投资智能分析平台</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
-    <!-- Chart.js 用于图表 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- 可选：添加图标库 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --success-color: #4cc9f0;
+            --warning-color: #f8961e;
+            --danger-color: #f72585;
+            --light-bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --border-color: #dee2e6;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+            --radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 头部导航 */
+        header {
+            background: var(--card-bg);
+            padding: 1.5rem 2rem;
+            border-radius: var(--radius);
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo h1 {
+            margin: 0;
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo .subtitle {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        nav {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        nav a {
+            color: var(--primary-color);
+            text-decoration: none;
+            padding: 0.75rem 1.25rem;
+            border-radius: var(--radius);
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        nav a:hover,
+        nav a.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* 主要内容区 */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .stat-card.success { border-left-color: var(--success-color); }
+        .stat-card.warning { border-left-color: var(--warning-color); }
+        .stat-card.danger { border-left-color: var(--danger-color); }
+
+        .stat-card .stat-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* 功能卡片网格 */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .feature-card .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-card .feature-icon i {
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .feature-card h3 {
+            margin: 0 0 1rem 0;
+            color: var(--text-primary);
+            font-size: 1.3rem;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .feature-card .feature-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .feature-card .feature-link:hover {
+            gap: 0.75rem;
+        }
+
+        /* 基金池展示 */
+        .fund-pools-section {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .section-header h2 {
+            margin: 0;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .fund-pools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .fund-pool-card {
+            background: var(--light-bg);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+        }
+
+        .fund-pool-card h3 {
+            margin: 0 0 1rem 0;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .fund-list {
+            list-style: none;
+        }
+
+        .fund-list li {
+            padding: 0.75rem;
+            background: var(--card-bg);
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .fund-list li:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .fund-list .fund-code {
+            font-family: monospace;
+            font-weight: 600;
+        }
+
+        .fund-list .fund-name {
+            flex: 1;
+            margin: 0 1rem;
+        }
+
+        .fund-list .fund-rank {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .fund-list li:hover .fund-rank {
+            background: white;
+            color: var(--primary-color);
+        }
+
+        /* 快速回测面板 */
+        .quick-backtest-panel {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .quick-backtest-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .btn {
+            padding: 0.85rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* 页脚 */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: white;
+            margin-top: 2rem;
+        }
+
+        footer a {
+            color: white;
+            text-decoration: none;
+            margin: 0 0.5rem;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            nav {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .fund-pools-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
+        <!-- 头部导航 -->
         <header>
-            <h1><i class="fas fa-chart-line"></i> 基智回测</h1>
-            <p class="subtitle">三步，找到适合你的基金组合</p>
+            <div class="logo">
+                <h1>
+                    <i class="fas fa-chart-line"></i>
+                    <div>
+                        基智回测
+                        <span class="subtitle">基金投资智能分析平台</span>
+                    </div>
+                </h1>
+            </div>
+            <nav>
+                <a href="index.html" class="active"><i class="fas fa-home"></i> 首页</a>
+                <a href="screening.html"><i class="fas fa-filter"></i> 基金筛选</a>
+                <a href="portfolio.html"><i class="fas fa-briefcase"></i> 投资组合</a>
+                <a href="backtest.html"><i class="fas fa-rocket"></i> 回测分析</a>
+            </nav>
         </header>
 
-        <main>
-            <div class="layout">
-                <!-- 左侧：配置面板 -->
-                <aside class="config-panel" id="configPanel">
-                    <h2><i class="fas fa-sliders-h"></i> 投资偏好</h2>
-                    
-                    <div class="input-group">
-                        <label for="initialCapital">
-                            <i class="fas fa-money-bill-wave"></i> 我想投入
-                        </label>
-                        <div class="input-with-unit">
-                            <input type="number" id="initialCapital" value="10000" min="1000" step="1000">
-                            <span class="unit">元</span>
-                        </div>
-                    </div>
-
-                    <div class="input-group">
-                        <label for="maxDrawdown">
-                            <i class="fas fa-shield-alt"></i> 我能承受的最大浮亏
-                            <span class="tooltip" title="历史上账户最惨的时候可能亏多少">?</span>
-                        </label>
-                        <select id="maxDrawdown">
-                            <option value="0.05">5% - 非常保守</option>
-                            <option value="0.10" selected>10% - 稳健</option>
-                            <option value="0.15">15% - 适度积极</option>
-                            <option value="0.20">20% - 积极</option>
-                            <option value="unknown">我不清楚，帮我测试</option>
-                        </select>
-                    </div>
-
-                    <div class="input-group">
-                        <label for="investmentPeriod">
-                            <i class="fas fa-calendar-alt"></i> 我打算投资多久
-                        </label>
-                        <select id="investmentPeriod">
-                            <option value="1">1年</option>
-                            <option value="3" selected>3年</option>
-                            <option value="5">5年</option>
-                            <option value="10">10年</option>
-                        </select>
-                    </div>
-
-                    <div class="input-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="indexFundOnly">
-                            <i class="fas fa-chart-bar"></i> 仅使用指数基金 (ETF/指数联接)
-                            <span class="tooltip" title="指数基金费率低、透明度高，跟踪特定市场指数">?</span>
-                        </label>
-                    </div>
-
-                    <div class="advanced-options" id="advancedOptions" style="display: none;">
-                        <h3><i class="fas fa-cog"></i> 高级选项</h3>
-                        <div class="input-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="enableRebalancing">
-                                启用季度自动调仓
-                            </label>
-                        </div>
-                    </div>
-
-                    <button class="btn-toggle-advanced" id="toggleAdvanced">
-                        <i class="fas fa-chevron-down"></i> 显示高级选项
-                    </button>
-
-                    <button class="btn-primary" id="runBacktestBtn">
-                        <i class="fas fa-rocket"></i> 开始智能回测
-                    </button>
-
-                    <div class="disclaimer">
-                        <p><i class="fas fa-exclamation-triangle"></i> <strong>重要提示</strong>：历史回测不预示未来表现。基金投资有风险，请谨慎决策。</p>
-                    </div>
-                </aside>
-
-                <!-- 中间：结果可视化 -->
-                <section class="result-visualization" id="resultSection" style="display: none;">
-                    <div class="result-header">
-                        <h2 id="resultTitle">您的智能投资组合分析</h2>
-                        <p id="resultSubtitle" class="result-subtitle">基于您的风险偏好和投资目标</p>
-                    </div>
-
-                    <div class="chart-container">
-                        <canvas id="navChart"></canvas>
-                    </div>
-
-                    <div class="metrics-dashboard">
-                        <div class="metric-card">
-                            <div class="metric-label">
-                                历史年化收益
-                                <span class="tooltip" title="一笔钱每年平均的增长速度">?</span>
-                            </div>
-                            <div class="metric-value" id="metricAnnualReturn">--</div>
-                            <div class="metric-bar">
-                                <div class="metric-fill" id="metricAnnualReturnBar" style="width: 0%"></div>
-                            </div>
-                        </div>
-
-                        <div class="metric-card">
-                            <div class="metric-label">
-                                最大回撤
-                                <span class="tooltip" title="历史上最惨的时候亏了多少">?</span>
-                            </div>
-                            <div class="metric-value" id="metricMaxDrawdown">--</div>
-                            <div class="metric-bar">
-                                <div class="metric-fill negative" id="metricMaxDrawdownBar" style="width: 0%"></div>
-                            </div>
-                        </div>
-
-                        <div class="metric-card">
-                            <div class="metric-label">
-                                夏普比率
-                                <span class="tooltip" title="收益的'性价比'，越高越好">?</span>
-                            </div>
-                            <div class="metric-value" id="metricSharpeRatio">--</div>
-                            <div class="metric-bar">
-                                <div class="metric-fill" id="metricSharpeRatioBar" style="width: 0%"></div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 右侧：智能洞察 -->
-                <aside class="insight-panel" id="insightPanel" style="display: none;">
-                    <div class="panel-section">
-                        <h3><i class="fas fa-star"></i> 推荐组合</h3>
-                        <div class="portfolio-composition" id="portfolioComposition">
-                            <!-- 动态生成组合卡片 -->
-                            <div class="loading">
-                                <i class="fas fa-spinner fa-spin"></i> 正在构建组合...
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="panel-section">
-                        <h3><i class="fas fa-robot"></i> 智能解读</h3>
-                        <div class="insight-bubble" id="insightBubble">
-                            <!-- 动态生成解读 -->
-                            <p>点击"开始智能回测"，获取个性化分析。</p>
-                        </div>
-                    </div>
-
-                    <div class="panel-section action-buttons">
-                        <button class="btn-secondary" id="savePortfolioBtn">
-                            <i class="fas fa-save"></i> 保存此组合
-                        </button>
-                        <button class="btn-secondary" id="compareBtn">
-                            <i class="fas fa-exchange-alt"></i> 与其他组合对比
-                        </button>
-                        <button class="btn-secondary" id="resetBtn">
-                            <i class="fas fa-redo"></i> 重新配置
-                        </button>
-                    </div>
-                </aside>
+        <main class="main-content">
+            <!-- 统计卡片 -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-database"></i></div>
+                    <div class="stat-label">基金总数</div>
+                    <div class="stat-value" id="totalFunds">26,129</div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                    <div class="stat-label">优质数据基金</div>
+                    <div class="stat-value" id="qualityFunds">1,000</div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-icon"><i class="fas fa-history"></i></div>
+                    <div class="stat-label">净值记录</div>
+                    <div class="stat-value" id="navRecords">2,027,179</div>
+                </div>
+                <div class="stat-card danger">
+                    <div class="stat-icon"><i class="fas fa-calendar-alt"></i></div>
+                    <div class="stat-label">数据时间跨度</div>
+                    <div class="stat-value" id="dataSpan">25 年</div>
+                </div>
             </div>
 
-            <!-- 初始状态：引导 -->
-            <div class="welcome-guide" id="welcomeGuide">
-                <div class="guide-content">
-                    <h2><i class="fas fa-magic"></i> 如何开始？</h2>
-                    <ol class="guide-steps">
-                        <li><strong>填写偏好</strong>：在左侧设置您的投资金额、风险承受能力和投资期限。</li>
-                        <li><strong>一键分析</strong>：点击"开始智能回测"，系统将为您智能筛选基金并构建组合。</li>
-                        <li><strong>查看结果</strong>：分析净值走势、关键指标，并获得通俗易懂的解读。</li>
-                    </ol>
-                    <div class="guide-tip">
-                        <i class="fas fa-lightbulb"></i> <strong>小贴士</strong>：您可以勾选"仅使用指数基金"来构建透明、低成本的组合。
+            <!-- 功能卡片 -->
+            <div class="features-grid">
+                <div class="feature-card" onclick="location.href='screening.html'">
+                    <div class="feature-icon">
+                        <i class="fas fa-filter"></i>
+                    </div>
+                    <h3>基金筛选</h3>
+                    <p>多维度筛选基金，支持按类型、收益率、回撤、夏普比率等条件筛选，发现优质投资标的。</p>
+                    <a href="screening.html" class="feature-link">
+                        立即筛选 <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+
+                <div class="feature-card" onclick="location.href='portfolio.html'">
+                    <div class="feature-icon">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <h3>投资组合</h3>
+                    <p>创建和管理您的投资组合，添加基金到组合，调整权重，实现资产配置优化。</p>
+                    <a href="portfolio.html" class="feature-link">
+                        管理组合 <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+
+                <div class="feature-card" onclick="location.href='backtest.html'">
+                    <div class="feature-icon">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <h3>回测分析</h3>
+                    <p>基于真实历史净值数据，对投资组合进行回测分析，评估历史表现和风险指标。</p>
+                    <a href="backtest.html" class="feature-link">
+                        开始回测 <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 精选基金池 -->
+            <div class="fund-pools-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-star"></i> 精选基金池</h2>
+                    <button class="btn btn-secondary" onclick="location.href='screening.html'">
+                        <i class="fas fa-search"></i> 查看更多
+                    </button>
+                </div>
+
+                <div class="fund-pools-grid">
+                    <!-- 红利 ETF 基金池 -->
+                    <div class="fund-pool-card">
+                        <h3><i class="fas fa-coins"></i> 红利 ETF 精选 TOP10</h3>
+                        <ul class="fund-list" id="dividendFundList">
+                            <!-- 动态加载 -->
+                        </ul>
+                    </div>
+
+                    <!-- 现金流 ETF 基金池 -->
+                    <div class="fund-pool-card">
+                        <h3><i class="fas fa-hand-holding-usd"></i> 现金流 ETF 精选 TOP10</h3>
+                        <ul class="fund-list" id="cashflowFundList">
+                            <!-- 动态加载 -->
+                        </ul>
                     </div>
                 </div>
             </div>
+
+            <!-- 快速回测 -->
+            <div class="quick-backtest-panel">
+                <div class="section-header">
+                    <h2><i class="fas fa-tachometer-alt"></i> 快速回测</h2>
+                </div>
+
+                <form class="quick-backtest-form" id="quickBacktestForm">
+                    <div class="form-group">
+                        <label for="quickPortfolio"><i class="fas fa-briefcase"></i> 选择组合</label>
+                        <select id="quickPortfolio" required>
+                            <option value="">请选择投资组合</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quickStartDate"><i class="fas fa-calendar-alt"></i> 开始日期</label>
+                        <input type="date" id="quickStartDate" value="2023-01-01" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quickEndDate"><i class="fas fa-calendar-alt"></i> 结束日期</label>
+                        <input type="date" id="quickEndDate" value="2024-12-31" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quickCapital"><i class="fas fa-yen-sign"></i> 初始资金</label>
+                        <input type="number" id="quickCapital" value="10000" min="1000" step="1000">
+                    </div>
+                </form>
+
+                <button type="button" class="btn btn-primary" onclick="runQuickBacktest()">
+                    <i class="fas fa-play"></i> 开始回测
+                </button>
+            </div>
         </main>
 
+        <!-- 页脚 -->
         <footer>
-            <p>基智回测 &copy; 2026 | 投资有风险，入市需谨慎 | 数据来源：公开市场数据</p>
-            <p class="footer-links">
-                <a href="#" id="aboutLink">关于我们</a> | 
-                <a href="#" id="disclaimerLink">免责声明</a> | 
-                <a href="#" id="apiLink">开发者API</a>
+            <p>基智回测 &copy; 2026 | 投资有风险，入市需谨慎</p>
+            <p>
+                <a href="#"><i class="fas fa-info-circle"></i> 关于我们</a> |
+                <a href="#"><i class="fas fa-file-contract"></i> 免责声明</a> |
+                <a href="#"><i class="fas fa-code"></i> 开发者 API</a>
             </p>
         </footer>
     </div>
 
-    <!-- 模态框：关于 -->
-    <div class="modal" id="aboutModal" style="display: none;">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <h2>关于基智回测</h2>
-            <p>这是一个开源的中国公募基金智能回测与组合推荐工具，旨在帮助个人投资者通过数据辅助决策。</p>
-            <p>功能特点：</p>
-            <ul>
-                <li>极简三步操作，快速获得个性化组合建议</li>
-                <li>智能算法筛选基金，优化资产配置</li>
-                <li>清晰的可视化结果和专业指标解读</li>
-                <li>支持指数基金专门筛选</li>
-            </ul>
-        </div>
-    </div>
+    <script>
+        const API_BASE_URL = 'http://192.168.0.2:3389/api';
 
-    <script src="js/app.js"></script>
+        // 加载统计数据
+        function loadStats() {
+            document.getElementById('totalFunds').textContent = '26,129';
+            document.getElementById('qualityFunds').textContent = '1,000';
+            document.getElementById('navRecords').textContent = '2,027,179';
+            document.getElementById('dataSpan').textContent = '25 年';
+        }
+
+        // 加载基金池数据
+        function loadFundPools() {
+            const dividendFunds = [
+                { rank: 1, code: '515180', name: '汇添富中证红利 ETF' },
+                { rank: 2, code: '515080', name: '易方达中证红利 ETF' },
+                { rank: 3, code: '560020', name: '汇添富中证红利 ETF' },
+                { rank: 4, code: '159583', name: '大成中证红利低波 100ETF' },
+                { rank: 5, code: '563550', name: '摩根中证 A500 红利低波动 ETF' },
+                { rank: 6, code: '563680', name: '富国中证 A500 红利低波 ETF' },
+                { rank: 7, code: '560660', name: '新华中证红利低波动 ETF' },
+                { rank: 8, code: '563700', name: '易方达中证红利价值 ETF' },
+                { rank: 9, code: '563020', name: '易方达中证红利低波动 ETF' },
+                { rank: 10, code: '561960', name: '招商中证国新央企股东回报 ETF' }
+            ];
+
+            const cashflowFunds = [
+                { rank: 1, code: '159235', name: '大成中证全指自由现金流 ETF' },
+                { rank: 2, code: '159221', name: '嘉实国证自由现金流 ETF' },
+                { rank: 3, code: '159233', name: '平安中证全指自由现金流 ETF' },
+                { rank: 4, code: '159225', name: '易方达国证自由现金流 ETF' },
+                { rank: 5, code: '563790', name: '博时中证全指自由现金流 ETF' },
+                { rank: 6, code: '563990', name: '富国中证 800 自由现金流 ETF' },
+                { rank: 7, code: '563980', name: '国泰富时中国 A 股自由现金流聚焦 ETF' },
+                { rank: 8, code: '563670', name: '汇添富中证 800 自由现金流 ETF' },
+                { rank: 9, code: '561760', name: '博时中证全指自由现金流 ETF' },
+                { rank: 10, code: '159222', name: '大成国证自由现金流 ETF' }
+            ];
+
+            const dividendList = document.getElementById('dividendFundList');
+            dividendList.innerHTML = dividendFunds.map(fund => `
+                <li>
+                    <span class="fund-rank">TOP${fund.rank}</span>
+                    <span class="fund-code">${fund.code}</span>
+                    <span class="fund-name">${fund.name}</span>
+                </li>
+            `).join('');
+
+            const cashflowList = document.getElementById('cashflowFundList');
+            cashflowList.innerHTML = cashflowFunds.map(fund => `
+                <li>
+                    <span class="fund-rank">TOP${fund.rank}</span>
+                    <span class="fund-code">${fund.code}</span>
+                    <span class="fund-name">${fund.name}</span>
+                </li>
+            `).join('');
+        }
+
+        // 加载投资组合列表
+        async function loadPortfolios() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/portfolios`);
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    const select = document.getElementById('quickPortfolio');
+                    select.innerHTML = '<option value="">请选择投资组合</option>' +
+                        result.data.map(p =>
+                            `<option value="${p.id}">${p.name} (${p.holdingsCount || 0}只基金)</option>`
+                        ).join('');
+                }
+            } catch (error) {
+                console.error('加载组合列表失败:', error);
+            }
+        }
+
+        // 快速回测
+        async function runQuickBacktest() {
+            const portfolioId = document.getElementById('quickPortfolio').value;
+            const startDate = document.getElementById('quickStartDate').value;
+            const endDate = document.getElementById('quickEndDate').value;
+            const initialCapital = parseFloat(document.getElementById('quickCapital').value);
+
+            if (!portfolioId) {
+                alert('请选择投资组合');
+                return;
+            }
+
+            try {
+                const btn = event.target;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 回测中...';
+
+                const response = await fetch(`${API_BASE_URL}/backtest/run`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        portfolioId: parseInt(portfolioId),
+                        startDate: startDate,
+                        endDate: endDate,
+                        initialCapital: initialCapital
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(`回测完成！\n\n总收益：${result.data.totalReturn}\n年化收益：${result.data.annualizedReturn}\n最大回撤：${result.data.maxDrawdown}\n夏普比率：${result.data.sharpeRatio}`);
+                    // 可以跳转到回测详情页
+                    // window.location.href = `backtest.html?portfolioId=${portfolioId}`;
+                } else {
+                    alert('回测失败：' + result.message);
+                }
+            } catch (error) {
+                alert('回测失败：' + error.message);
+            } finally {
+                const btn = event.target;
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-play"></i> 开始回测';
+            }
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStats();
+            loadFundPools();
+            loadPortfolios();
+        });
+    </script>
 </body>
 </html>

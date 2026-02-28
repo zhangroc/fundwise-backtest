@@ -59,4 +59,9 @@ public interface FundRepository extends JpaRepository<Fund, String> {
      * 复合查询：指数基金且风险等级匹配
      */
     List<Fund> findByIsIndexFundAndRiskLevel(Boolean isIndexFund, String riskLevel);
+    
+    /**
+     * 根据基金代码查询
+     */
+    java.util.Optional<Fund> findByFundCode(String fundCode);
 }
