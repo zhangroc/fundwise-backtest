@@ -202,6 +202,9 @@ public class FundController {
         map.put("totalAssets", fund.getTotalAssets());
         map.put("isIndexFund", fund.getIsIndexFund());
         map.put("establishmentDate", fund.getEstablishmentDate());
+        map.put("navRecordCount", fund.getNavRecordCount());
+        map.put("navStartDate", fund.getNavStartDate());
+        map.put("navEndDate", fund.getNavEndDate());
         
         // 计算成立年限
         if (fund.getEstablishmentDate() != null) {
