@@ -2,8 +2,15 @@
 // 生产环境使用相对路径，通过反向代理访问
 // 开发环境可设置 API_BASE_URL 为实际后端地址
 (function() {
-    // 使用相对路径，通过 Nginx 反向代理或同源访问
-    window.API_BASE_URL = '';
+    // 使用相对路径或动态判断
+    // 如果存在 /api 路径的反向代理，则用空字符串
+    // 否则需要指向实际后端地址
+    const currentOrigin = window.location.origin;
+    const isLocalDev = currentOrigin.includes('localhost') || currentOrigin.includes('127.0.0.1');
+    
+    // 本地开发用localhost:3389，生产环境应该配置反向代理
+    window.API_BASE_URL = isLocalDev ? 'http://localhost:3389' : '';
+    
     window.API = {
         // 基金相关
         funds: {
