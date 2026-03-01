@@ -267,12 +267,20 @@
             content.innerHTML = '<div class="loading">加载中...</div>';
             
             try {
-                const endpoint = type === 'funds' ? API.recommend.funds : API.recommend.portfolio;
-                const response = await fetch(API_BASE_URL + endpoint);
+                const response = await fetch(API_BASE_URL + API.recommend.funds, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        initialCapital: 10000,
+                        maxDrawdown: 0.1,
+                        indexFundOnly: type === 'funds',
+                        investmentPeriod: 3
+                    })
+                });
                 const result = await response.json();
                 
-                if (result.success) {
-                    renderRecommend(type, result.data);
+                if (result.success && result.portfolio) {
+                    renderRecommend(type, result);
                 } else {
                     content.innerHTML = '<div class="empty-state">暂无推荐数据</div>';
                 }
@@ -283,25 +291,64 @@
         }
         
         // 渲染推荐内容
-        function renderRecommend(type, data) {
+        function renderRecommend(type, result) {
             const content = document.getElementById('recommendContent');
             
-            if (!data || data.length === 0) {
+            const portfolio = result.portfolio;
+            const backtest = result.backtest;
+            
+            if (!portfolio || !portfolio.funds || portfolio.funds.length === 0) {
                 content.innerHTML = '<div class="empty-state">暂无推荐数据</div>';
                 return;
             }
             
-            if (type === 'funds') {
-                renderFundRecommend(data);
-            } else {
-                renderPortfolioRecommend(data);
-            }
-        }
-        
-        // 渲染基金推荐
-        function renderFundRecommend(funds) {
-            const content = document.getElementById('recommendContent');
-            content.innerHTML = funds.map(fund => `
+            // 渲染组合推荐卡片
+            content.innerHTML = `
+                <div class="recommend-card" style="grid-column: 1 / -1;">
+                    <div class="recommend-card-header">
+                        <div>
+                            <div class="recommend-card-title">${portfolio.name}</div>
+                            <div class="recommend-card-code">推荐 ${portfolio.funds.length} 只基金</div>
+                        </div>
+                        <span class="recommend-card-type">${portfolio.riskLevel}</span>
+                    </div>
+                    <div class="recommend-card-stats">
+                        <div class="recommend-stat">
+                            <div class="recommend-stat-label">年化收益率</div>
+                            <div class="recommend-stat-value ${backtest.annualizedReturn >= 0 ? 'positive' : 'negative'}">
+                                ${backtest.annualizedReturn >= 0 ? '+' : ''}${(backtest.annualizedReturn * 100).toFixed(1)}%
+                            </div>
+                        </div>
+                        <div class="recommend-stat">
+                            <div class="recommend-stat-label">夏普比率</div>
+                            <div class="recommend-stat-value">${backtest.sharpeRatio}</div>
+                        </div>
+                        <div class="recommend-stat">
+                            <div class="recommend-stat-label">最大回撤</div>
+                            <div class="recommend-stat-value negative">-${(backtest.maxDrawdown * 100).toFixed(1)}%</div>
+                        </div>
+                        <div class="recommend-stat">
+                            <div class="recommend-stat-label">风险等级</div>
+                            <div class="recommend-stat-value">
+                                <span class="risk-tag risk-${portfolio.riskLevel === '稳健' ? 'medium' : portfolio.riskLevel === '保守' ? 'low' : 'high'}">${portfolio.riskLevel}</span>
+                            </div>
+                        </div>
+                    </div>
+                    ${result.insights ? `
+                    <div style="margin-top: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px;">
+                        <div style="font-weight: 600; margin-bottom: 0.5rem;">💡 智能解读</div>
+                        <ul style="margin: 0; padding-left: 1.2rem; color: var(--text-secondary); font-size: 0.9rem;">
+                            ${result.insights.map(i => `<li style="margin-bottom: 0.25rem;">${i}</li>`).join('')}
+                        </ul>
+                    </div>
+                    ` : ''}
+                    <div class="recommend-card-actions">
+                        <button class="recommend-btn recommend-btn-primary" onclick="runBacktest(${portfolio.id})">开始回测</button>
+                        <button class="recommend-btn recommend-btn-secondary" onclick="usePortfolio(${portfolio.id})">使用此组合</button>
+                    </div>
+                </div>
+                <h3 style="grid-column: 1 / -1; margin-top: 1rem;">包含的基金</h3>
+                ${portfolio.funds.map(fund => `
                 <div class="recommend-card">
                     <div class="recommend-card-header">
                         <div>
@@ -312,59 +359,29 @@
                     </div>
                     <div class="recommend-card-stats">
                         <div class="recommend-stat">
-                            <div class="recommend-stat-label">年化收益率</div>
-                            <div class="recommend-stat-value ${fund.annualReturn >= 0 ? 'positive' : 'negative'}">
-                                ${fund.annualReturn >= 0 ? '+' : ''}${fund.annualReturn}%
-                            </div>
+                            <div class="recommend-stat-label">配置权重</div>
+                            <div class="recommend-stat-value">${(fund.weight * 100).toFixed(0)}%</div>
                         </div>
                         <div class="recommend-stat">
-                            <div class="recommend-stat-label">夏普比率</div>
-                            <div class="recommend-stat-value">${fund.sharpeRatio}</div>
+                            <div class="recommend-stat-label">基金规模</div>
+                            <div class="recommend-stat-value">${fund.totalAssets ? fund.totalAssets.toFixed(1) + '亿' : '-'}</div>
                         </div>
                         <div class="recommend-stat">
-                            <div class="recommend-stat-label">最大回撤</div>
-                            <div class="recommend-stat-value negative">${fund.maxDrawdown}%</div>
+                            <div class="recommend-stat-label">成立年限</div>
+                            <div class="recommend-stat-value">${fund.establishedYears}年</div>
                         </div>
                         <div class="recommend-stat">
-                            <div class="recommend-stat-label">风险等级</div>
-                            <div class="recommend-stat-value">
-                                <span class="risk-tag risk-${fund.riskLevel}">${fund.riskLevelText}</span>
-                            </div>
+                            <div class="recommend-stat-label">基金公司</div>
+                            <div class="recommend-stat-value" style="font-size: 0.85rem;">${fund.company}</div>
                         </div>
                     </div>
                     <div class="recommend-card-actions">
                         <button class="recommend-btn recommend-btn-primary" onclick="viewFundDetail('${fund.code}')">查看详情</button>
-                        <button class="recommend-btn recommend-btn-secondary" onclick="addToPortfolio('${fund.code}')">添加到组合</button>
                     </div>
                 </div>
-            `).join('');
-        }
-        
-        // 渲染组合推荐
-        function renderPortfolioRecommend(portfolios) {
-            const content = document.getElementById('recommendContent');
-            content.innerHTML = portfolios.map(portfolio => `
-                <div class="recommend-card">
-                    <div class="recommend-card-header">
-                        <div>
-                            <div class="recommend-card-title">${portfolio.name}</div>
-                            <div class="recommend-card-code">${portfolio.description}</div>
-                        </div>
-                        <span class="recommend-card-type">${portfolio.type}</span>
-                    </div>
-                    <div class="recommend-card-stats">
-                        <div class="recommend-stat">
-                            <div class="recommend-stat-label">年化收益率</div>
-                            <div class="recommend-stat-value ${portfolio.annualReturn >= 0 ? 'positive' : 'negative'}">
-                                ${portfolio.annualReturn >= 0 ? '+' : ''}${portfolio.annualReturn}%
-                            </div>
-                        </div>
-                        <div class="recommend-stat">
-                            <div class="recommend-stat-label">夏普比率</div>
-                            <div class="recommend-stat-value">${portfolio.sharpeRatio}</div>
-                        </div>
-                        <div class="recommend-stat">
-                            <div class="recommend-stat-label">最大回撤</div>
+                `).join('')}
+            `;
+        }最大回撤</div>
                             <div class="recommend-stat-value negative">${portfolio.maxDrawdown}%</div>
                         </div>
                         <div class="recommend-stat">

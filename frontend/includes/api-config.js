@@ -33,8 +33,8 @@
         },
         // 智能推荐
         recommend: {
-            funds: '/api/v1/recommend/funds',
-            portfolio: '/api/v1/recommend/portfolio'
+            funds: '/api/recommend',
+            portfolio: '/api/recommend'
         },
         // 首页统计
         stats: {
