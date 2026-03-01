@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
     <title>基智回测 - 基金投资智能分析平台</title>
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/brand.css">
-    <link rel="stylesheet" href="lib/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="lib/chart.min.js"></script>
     <script src="includes/api-config.js"></script>
     <style>
@@ -135,43 +136,30 @@
                 </div>
             </div>
             <nav class="sidebar-nav">
-                <div class="nav-section">
-                    <div class="nav-section-title">概览</div>
-                    <a href="/index.html" class="nav-link active">
-                        <i class="fas fa-home"></i>
-                        <span>首页</span>
-                    </a>
-                </div>
-                <div class="nav-section">
-                    <div class="nav-section-title">功能</div>
-                    <a href="/screening.html" class="nav-link">
-                        <i class="fas fa-filter"></i>
-                        <span>基金筛选</span>
-                    </a>
-                    <a href="/recommend.html" class="nav-link">
-                        <i class="fas fa-lightbulb"></i>
-                        <span>智能推荐</span>
-                    </a>
-                    <a href="/portfolio.html" class="nav-link">
-                        <i class="fas fa-briefcase"></i>
-                        <span>我的组合</span>
-                    </a>
-                    <a href="/backtest.html" class="nav-link">
-                        <i class="fas fa-chart-area"></i>
-                        <span>历史回测</span>
-                    </a>
-                </div>
-                <div class="nav-section">
-                    <div class="nav-section-title">分析</div>
-                    <a href="/compare.html" class="nav-link">
-                        <i class="fas fa-balance-scale"></i>
-                        <span>组合对比</span>
-                    </a>
-                    <a href="/detail.html" class="nav-link">
-                        <i class="fas fa-chart-bar"></i>
-                        <span>基金详情</span>
-                    </a>
-                </div>
+                <a href="index.html" class="nav-link active">
+                    <i class="fas fa-home"></i>
+                    <span>首页</span>
+                </a>
+                <a href="screening.html" class="nav-link">
+                    <i class="fas fa-filter"></i>
+                    <span>基金筛选</span>
+                </a>
+                <a href="recommend.html" class="nav-link">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>智能推荐</span>
+                </a>
+                <a href="portfolio.html" class="nav-link">
+                    <i class="fas fa-folder"></i>
+                    <span>我的组合</span>
+                </a>
+                <a href="backtest.html" class="nav-link">
+                    <i class="fas fa-chart-line"></i>
+                    <span>历史回测</span>
+                </a>
+                <a href="compare.html" class="nav-link">
+                    <i class="fas fa-balance-scale"></i>
+                    <span>组合对比</span>
+                </a>
             </nav>
         </aside>
 
@@ -245,7 +233,7 @@
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon orange">
-                            <i class="fas fa-percentage"></i>
+                            <i class="fas fa-folder-open"></i>
                         </div>
                         <div class="stat-content">
                             <div class="stat-label">我的组合</div>
@@ -256,28 +244,28 @@
 
                 <!-- 功能卡片 -->
                 <div class="stats-grid" style="margin-top: 2rem;">
-                    <div class="feature-card">
+                    <a href="screening.html" class="feature-card" style="text-decoration: none; color: inherit; display: block;">
                         <div class="feature-icon blue">
                             <i class="fas fa-filter"></i>
                         </div>
                         <div class="feature-title">智能筛选</div>
                         <div class="feature-desc">多维度筛选符合条件的优质基金</div>
-                    </div>
-                    <div class="feature-card">
+                    </a>
+                    <a href="recommend.html" class="feature-card" style="text-decoration: none; color: inherit; display: block;">
                         <div class="feature-icon green">
                             <i class="fas fa-robot"></i>
                         </div>
                         <div class="feature-title">智能推荐</div>
                         <div class="feature-desc">根据风险偏好推荐最优组合</div>
-                    </div>
-                    <div class="feature-card">
+                    </a>
+                    <a href="backtest.html" class="feature-card" style="text-decoration: none; color: inherit; display: block;">
                         <div class="feature-icon purple">
                             <i class="fas fa-history"></i>
                         </div>
                         <div class="feature-title">历史回测</div>
                         <div class="feature-desc">基于真实历史数据的业绩回测</div>
-                    </div>
-                    <div class="feature-card">
+                    </a>
+                    <a href="compare.html" class="feature-card" style="text-decoration: none; color: inherit; display: block;">
                         <div class="feature-icon orange">
                             <i class="fas fa-balance-scale"></i>
                         </div>
@@ -291,9 +279,9 @@
                     <div class="card-header">
                         <h3 class="card-title">
                             <i class="fas fa-star" style="color: var(--warning-color);"></i>
-                            热门指数基金推荐
+                            热门基金推荐
                         </h3>
-                        <a href="/screening.html" class="btn btn-sm btn-secondary">
+                        <a href="screening.html" class="btn btn-sm btn-secondary">
                             查看更多 <i class="fas fa-arrow-right"></i>
                         </a>
                     </div>
@@ -317,7 +305,7 @@
                                         <td><span class="badge badge-primary">混合型</span></td>
                                         <td>413.60</td>
                                         <td>——</td>
-                                        <td><a href="/detail.html?code=000001" class="btn btn-sm btn-secondary">详情</a></td>
+                                        <td><a href="detail.html?code=000001" class="btn btn-sm btn-secondary">详情</a></td>
                                     </tr>
                                     <tr>
                                         <td>000016</td>
@@ -325,15 +313,15 @@
                                         <td><span class="badge badge-success">指数型</span></td>
                                         <td>512.28</td>
                                         <td>上证50</td>
-                                        <td><a href="/detail.html?code=000016" class="btn btn-sm btn-secondary">详情</a></td>
+                                        <td><a href="detail.html?code=000016" class="btn btn-sm btn-secondary">详情</a></td>
                                     </tr>
                                     <tr>
                                         <td>000300</td>
                                         <td>华夏沪深300ETF</td>
                                         <td><span class="badge badge-success">指数型</span></td>
-                                        <td>1200+</td>
+                                        <td>1200.00</td>
                                         <td>沪深300</td>
-                                        <td><a href="/detail.html?code=000300" class="btn btn-sm btn-secondary">详情</a></td>
+                                        <td><a href="detail.html?code=000300" class="btn btn-sm btn-secondary">详情</a></td>
                                     </tr>
                                 </tbody>
                             </table>

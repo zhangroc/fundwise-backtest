@@ -172,3 +172,17 @@
 | 日期 | Bug ID | 修复内容 | 状态 |
 |------|--------|----------|------|
 | 2026-03-01 | - | 创建修复计划文件 | ✅ |
+| 2026-03-01 | BUG-001 | 创建统一API配置文件 api-config.js | ✅ |
+| 2026-03-01 | BUG-002 | 创建 recommend.html 智能推荐页面 | ✅ |
+| 2026-03-01 | BUG-005 | portfolio.html 回测按钮添加点击事件 | ✅ |
+| 2026-03-01 | BUG-006 | portfolio.html 编辑按钮添加点击事件 | ✅ |
+| 2026-03-01 | BUG-007 | compare.html 数据一致性修复(添加校验) | ✅ |
+| 2026-03-01 | BUG-008 | backtest.html 日期校验 | ✅ |
+| 2026-03-01 | BUG-009 | backtest.html 初始资金为0校验 | ✅ |
+| 2026-03-01 | BUG-010 | backtest.html 初始资金为负数校验 | ✅ |
+| 2026-03-01 | BUG-011 | backtest.html 必填字段校验 | ✅ |
+| 2026-03-01 | BUG-012 | compare.html 禁止选择相同组合校验 | ✅ |
+| 2026-03-01 | BUG-013 | index.html chart.min.js 改为script引用 | ✅ |
+| 2026-03-01 | BUG-014 | detail.html viewport meta标签修正 | ✅ |
+| 2026-03-01 | BUG-015 | backtest.html 初始资金输入框属性约束 | ✅ |
+| 2026-03-01 | BUG-016 | backtest.html 日期输入框属性约束 | ✅ |
