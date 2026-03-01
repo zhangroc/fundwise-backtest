@@ -8,7 +8,8 @@
  */
 
 // 后端地址配置（远程测试时可修改此值）
-const BACKEND_URL = '';  // 如: 'http://106.12.165.68:3389' 或 ''（使用反向代理）
+// 留空则使用相对路径，通过nginx反向代理
+const BACKEND_URL = '';
 
 class ApiClient {
     constructor() {
