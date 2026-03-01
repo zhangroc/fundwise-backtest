@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能推荐 - 基智回测</title>
+    <script src="includes/api-config.js"></script>
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/brand.css">
+    <link rel="stylesheet" href="lib/all.min.css">
+    <style>
+        .recommend-container {
+            padding: 1.5rem;
+        }
+        
+        .recommend-header {
+            margin-bottom: 1.5rem;
+        }
+        
+        .recommend-header h1 {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .recommend-header p {
+            color: var(--text-secondary);
+        }
+        
+        .recommend-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+        
+        .recommend-tab {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+        
+        .recommend-tab.active {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .recommend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+        
+        .recommend-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .recommend-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .recommend-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        
+        .recommend-card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .recommend-card-code {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        .recommend-card-type {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background: var(--primary-light);
+            color: var(--primary-color);
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        
+        .recommend-card-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin: 1rem 0;
+        }
+        
+        .recommend-stat {
+            text-align: center;
+        }
+        
+        .recommend-stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        .recommend-stat-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .recommend-stat-value.positive {
+            color: #10b981;
+        }
+        
+        .recommend-stat-value.negative {
+            color: #ef4444;
+        }
+        
+        .recommend-card-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .recommend-btn {
+            flex: 1;
+            padding: 0.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .recommend-btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .recommend-btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        
+        .recommend-btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        
+        .recommend-btn-secondary:hover {
+            background: var(--border-color);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+        
+        .risk-tag {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .risk-low {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .risk-medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .risk-high {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>基智回测</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>首页</span>
+                </a>
+                <a href="screening.html" class="nav-item">
+                    <i class="fas fa-filter"></i>
+                    <span>基金筛选</span>
+                </a>
+                <a href="recommend.html" class="nav-item active">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>智能推荐</span>
+                </a>
+                <a href="backtest.html" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>历史回测</span>
+                </a>
+                <a href="compare.html" class="nav-item">
+                    <i class="fas fa-balance-scale"></i>
+                    <span>组合对比</span>
+                </a>
+                <a href="portfolio.html" class="nav-item">
+                    <i class="fas fa-folder"></i>
+                    <span>我的组合</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <div class="recommend-header">
+                <h1>智能推荐</h1>
+                <p>基于大数据分析，为您推荐优质基金和投资组合</p>
+            </div>
+            
+            <div class="recommend-tabs">
+                <button class="recommend-tab active" data-tab="funds">基金推荐</button>
+                <button class="recommend-tab" data-tab="portfolio">组合推荐</button>
+            </div>
+            
+            <div id="recommendContent" class="recommend-grid">
+                <div class="loading">加载中...</div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Tab切换
+        document.querySelectorAll('.recommend-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.recommend-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                loadRecommend(tab.dataset.tab);
+            });
+        });
+        
+        // 加载推荐数据
+        async function loadRecommend(type) {
+            const content = document.getElementById('recommendContent');
+            content.innerHTML = '<div class="loading">加载中...</div>';
+            
+            try {
+                const endpoint = type === 'funds' ? API.recommend.funds : API.recommend.portfolio;
+                const response = await fetch(API_BASE_URL + endpoint);
+                const result = await response.json();
+                
+                if (result.success) {
+                    renderRecommend(type, result.data);
+                } else {
+                    content.innerHTML = '<div class="empty-state">暂无推荐数据</div>';
+                }
+            } catch (e) {
+                console.error('加载推荐失败:', e);
+                content.innerHTML = '<div class="empty-state">加载失败，请稍后重试</div>';
+            }
+        }
+        
+        // 渲染推荐内容
+        function renderRecommend(type, data) {
+            const content = document.getElementById('recommendContent');
+            
+            if (!data || data.length === 0) {
+                content.innerHTML = '<div class="empty-state">暂无推荐数据</div>';
+                return;
+            }
+            
+            if (type === 'funds') {
+                renderFundRecommend(data);
+            } else {
+                renderPortfolioRecommend(data);
+            }
+        }
+        
+        // 渲染基金推荐
+        function renderFundRecommend(funds) {
+            const content = document.getElementById('recommendContent');
+            content.innerHTML = funds.map(fund => `
+                <div class="recommend-card">
+                    <div class="recommend-card-header">
+                        <div>
+                            <div class="recommend-card-title">${fund.name}</div>
+                            <div class="recommend-card-code">${fund.code}</div>
+                        </div>
+                        <span class="recommend-card-type">${fund.type}</span>
+                    </div>
+                    <div class="recommend-card-stats">
+                        <div class="recommend-stat">
+                            <div class="recommend-stat-label">年化收益率</div>
+                            <div class="recommend-stat-value ${fund.annualReturn >= 0 ? 'positive' : 'negative'}">
+                                ${fund.annualReturn >= 0 ? '+' : ''}${fund.annualReturn}%
+                            </div>
+                        </div>
+                        <div class="recommend-stat">
+                            <div class="recommend-stat-label">夏普比率</div>
+                            <div class="recommend-stat-value">${fund.sharpeRatio}</div>
+                        </div>
+                        <div class="recommend-stat">
+                            <div class="recommend-stat-label">最大回撤</div>
+                            <div class="recommend-stat-value negative">${fund.maxDrawdown}%</div>
+                        </div>
+                        <div class="recommend-stat">
+                            <div class="recommend-stat-label">风险等级</div>
+                            <div class="recommend-stat-value">
+                                <span class="risk-tag risk-${fund.riskLevel}">${fund.riskLevelText}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="recommend-card-actions">
+                        <button class="recommend-btn recommend-btn-primary" onclick="viewFundDetail('${fund.code}')">查看详情</button>
+                        <button class="recommend-btn recommend-btn-secondary" onclick="addToPortfolio('${fund.code}')">添加到组合</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 渲染组合推荐
+        function renderPortfolioRecommend(portfolios) {
+            const content = document.getElementById('recommendContent');
+            content.innerHTML = portfolios.map(portfolio => `
+                <div class="recommend-card">
+                    <div class="recommend-card-header">
+                        <div>
+                            <div class="recommend-card-title">${portfolio.name}</div>
+                            <div class="recommend-card-code">${portfolio.description}</div>
+                        </div>
+                        <span class="recommend-card-type">${portfolio.type}</span>
+                    </div>
+                    <div class="recommend-card-stats">
+                        <div class="recommend-stat">
+                            <div class="recommend-stat-label">年化收益率</div>
+                            <div class="recommend-stat-value ${portfolio.annualReturn >= 0 ? 'positive' : 'negative'}">
+                                ${portfolio.annualReturn >= 0 ? '+' : ''}${portfolio.annualReturn}%
+                            </div>
+                        </div>
+                        <div class="recommend-stat">
+                            <div class="recommend-stat-label">夏普比率</div>
+                            <div class="recommend-stat-value">${portfolio.sharpeRatio}</div>
+                        </div>
+                        <div class="recommend-stat">
+                            <div class="recommend-stat-label">最大回撤</div>
+                            <div class="recommend-stat-value negative">${portfolio.maxDrawdown}%</div>
+                        </div>
+                        <div class="recommend-stat">
+                            <div class="recommend-stat-label">基金数量</div>
+                            <div class="recommend-stat-value">${portfolio.fundCount}只</div>
+                        </div>
+                    </div>
+                    <div class="recommend-card-actions">
+                        <button class="recommend-btn recommend-btn-primary" onclick="backtestPortfolio(${portfolio.id})">回测</button>
+                        <button class="recommend-btn recommend-btn-secondary" onclick="usePortfolio(${portfolio.id})">使用组合</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 查看基金详情
+        function viewFundDetail(code) {
+            window.location.href = `detail.html?code=${code}`;
+        }
+        
+        // 添加到组合
+        function addToPortfolio(code) {
+            alert('添加到组合功能开发中');
+        }
+        
+        // 回测组合
+        function backtestPortfolio(id) {
+            window.location.href = `backtest.html?portfolioId=${id}`;
+        }
+        
+        // 使用组合
+        function usePortfolio(id) {
+            window.location.href = `backtest.html?portfolioId=${id}`;
+        }
+        
+        // 页面加载时获取推荐数据
+        document.addEventListener('DOMContentLoaded', () => {
+            loadRecommend('funds');
+        });
+    </script>
+</body>
+</html>

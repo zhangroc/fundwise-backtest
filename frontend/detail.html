@@ -2,12 +2,13 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device=device=width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>基金详情 - 基智回测</title>
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/brand.css">
     <link rel="stylesheet" href="lib/all.min.css">
     <script src="lib/chart.min.js"></script>
+    <script src="includes/api-config.js"></script>
     <style>
         /* 详情页样式 */
         .detail-header {
@@ -333,7 +334,7 @@
             document.getElementById('content').style.display = 'none';
             
             try {
-                const response = await fetch(`http://localhost:3389/api/v1/funds/${code}`);
+                const response = await fetch(`${API_BASE_URL}${API.funds.detail}/${code}`);
                 const result = await response.json();
                 
                 if (result.success) {

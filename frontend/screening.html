@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>基金筛选 - 基智回测</title>
+    <script src="includes/api-config.js"></script>
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/brand.css">
     <link rel="stylesheet" href="lib/all.min.css">
@@ -332,7 +333,6 @@
     </div>
 
     <script>
-        const API_BASE = 'http://localhost:3389/api/v1/funds';
         let currentPage = 1;
         const pageSize = 20;
         let totalCount = 0;
@@ -350,7 +350,7 @@
             const establishYears = document.getElementById('establishYears').value;
             const indexFundOnly = document.getElementById('indexFundOnly').value === 'true';
             
-            let url = `${API_BASE}/screen?page=${currentPage}&pageSize=${pageSize}`;
+            let url = `${API_BASE_URL}${API.funds.screen}?page=${currentPage}&pageSize=${pageSize}`;
             
             if (fundType !== 'all') url += `&fundType=${encodeURIComponent(fundType)}`;
             if (fundSize !== 'all') url += `&minSize=${fundSize}`;

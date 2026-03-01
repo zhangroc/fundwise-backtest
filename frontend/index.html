@@ -7,7 +7,8 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/brand.css">
     <link rel="stylesheet" href="lib/all.min.css">
-    <link rel="stylesheet" href="lib/chart.min.js">
+    <script src="lib/chart.min.js"></script>
+    <script src="includes/api-config.js"></script>
     <style>
         /* 首页特定样式 */
         .hero-section {
@@ -354,7 +355,7 @@
         // 加载基金统计数据
         async function loadStats() {
             try {
-                const response = await fetch('http://localhost:3389/api/v1/funds/screen?page=1&pageSize=1');
+                const response = await fetch(API_BASE_URL + API.funds.screen + '?page=1&pageSize=1');
                 const data = await response.json();
                 if (data.total) {
                     document.getElementById('fundCount').textContent = data.total.toLocaleString();
@@ -366,5 +367,6 @@
         
         loadStats();
     </script>
+    <script src="includes/api-config.js"></script>
 </body>
 </html>

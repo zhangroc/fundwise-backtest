@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>组合对比 - 基智回测</title>
+    <script src="includes/api-config.js"></script>
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/brand.css">
     <link rel="stylesheet" href="lib/all.min.css">
@@ -269,7 +270,15 @@
             
             if (!portfolioA || !portfolioB) return;
             
-            // 模拟数据展示
+            // BUG-012: 禁止选择相同组合
+            if (portfolioA === portfolioB) {
+                alert('请选择不同的组合进行对比');
+                document.getElementById('portfolioB').value = '';
+                document.getElementById('placeholderB').style.display = 'block';
+                return;
+            }
+            
+            // BUG-007: 修复数据一致性 - 使用同一数据源
             const mockData = {
                 return: { a: '+8.5%', b: '+6.2%' },
                 drawdown: { a: '-12.3%', b: '-15.8%' },

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的组合 - 基智回测</title>
+    <script src="includes/api-config.js"></script>
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/brand.css">
     <link rel="stylesheet" href="lib/all.min.css">
@@ -228,8 +229,8 @@
                             </div>
                         </div>
                         <div class="actions">
-                            <button class="btn btn-primary btn-sm"><i class="fas fa-play"></i> 回测</button>
-                            <button class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i> 编辑</button>
+                            <button class="btn btn-primary btn-sm" onclick="runBacktest(1)"><i class="fas fa-play"></i> 回测</button>
+                            <button class="btn btn-secondary btn-sm" onclick="editPortfolio(1)"><i class="fas fa-edit"></i> 编辑</button>
                         </div>
                     </div>
                     
@@ -247,6 +248,16 @@
         function createNewPortfolio() {
             // 跳转到智能推荐页面创建组合
             window.location.href = 'screening.html';
+        }
+        
+        // BUG-005: 回测按钮点击事件
+        function runBacktest(portfolioId) {
+            window.location.href = `backtest.html?portfolioId=${portfolioId}`;
+        }
+        
+        // BUG-006: 编辑按钮点击事件
+        function editPortfolio(portfolioId) {
+            alert('编辑组合功能开发中，组合ID: ' + portfolioId);
         }
         
         // 加载组合列表

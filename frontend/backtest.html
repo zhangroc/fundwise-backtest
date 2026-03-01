@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="css/brand.css">
     <link rel="stylesheet" href="lib/all.min.css">
     <script src="lib/chart.min.js"></script>
+    <script src="includes/api-config.js"></script>
     <style>
         /* 回测页面样式 */
         .backtest-container {
@@ -197,15 +198,15 @@
                         </div>
                         <div class="form-group">
                             <label>回测开始日期</label>
-                            <input type="date" id="startDate" value="2024-01-01">
+                            <input type="date" id="startDate" value="2024-01-01" min="2001-01-01" max="2026-12-31" required>
                         </div>
                         <div class="form-group">
                             <label>回测结束日期</label>
-                            <input type="date" id="endDate" value="2024-12-31">
+                            <input type="date" id="endDate" value="2024-12-31" min="2001-01-01" max="2026-12-31" required>
                         </div>
                         <div class="form-group">
                             <label>初始资金（元）</label>
-                            <input type="number" id="initialCapital" value="10000">
+                            <input type="number" id="initialCapital" value="10000" min="1" max="100000000" step="1000" required>
                         </div>
                         <button class="btn btn-primary" style="width: 100%;" onclick="runBacktest()">
                             <i class="fas fa-play"></i> 开始回测
@@ -283,8 +284,28 @@
                 return;
             }
             
+            // BUG-008: 开始日期晚于结束日期校验
+            if (startDate > endDate) {
+                alert('结束日期不能早于开始日期');
+                return;
+            }
+            
+            // BUG-009: 初始资金为0校验
+            if (!initialCapital || initialCapital <= 0) {
+                alert('初始资金必须大于0');
+                return;
+            }
+            
+            // BUG-010: 初始资金为负数校验 (已在HTML min属性预防，但增加JS校验)
+            if (initialCapital < 0) {
+                alert('初始资金不能为负数');
+                return;
+            }
+            
+            // BUG-011: 日期和资金字段清空校验 (HTML required属性已处理)
+            
             try {
-                const response = await fetch('http://localhost:3389/api/backtest/run', {
+                const response = await fetch(API_BASE_URL + API.backtest.run, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
