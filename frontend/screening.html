@@ -349,12 +349,13 @@
             const establishYears = document.getElementById('establishYears').value;
             const indexFundOnly = document.getElementById('indexFundOnly').value === 'true';
             
-            let url = `${API_BASE_URL}${API.funds.screen}?page=${currentPage}&pageSize=${pageSize}`;
+            // 使用 api-client
+            let url = '/api/v1/funds/screen?page=' + currentPage + '&pageSize=' + pageSize;
             
-            if (fundType !== 'all') url += `&fundType=${encodeURIComponent(fundType)}`;
-            if (fundSize !== 'all') url += `&minSize=${fundSize}`;
-            if (establishYears !== 'all') url += `&minYears=${establishYears}`;
-            if (indexFundOnly) url += `&indexFundOnly=true`;
+            if (fundType !== 'all') url += '&fundType=' + encodeURIComponent(fundType);
+            if (fundSize !== 'all') url += '&minSize=' + fundSize;
+            if (establishYears !== 'all') url += '&minYears=' + establishYears;
+            if (indexFundOnly) url += '&indexFundOnly=true';
             
             try {
                 const response = await fetch(url);

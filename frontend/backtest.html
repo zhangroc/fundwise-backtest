@@ -307,7 +307,7 @@
             // BUG-011: 日期和资金字段清空校验 (HTML required属性已处理)
             
             try {
-                const response = await fetch(API_BASE_URL + API.backtest.run, {
+                const response = await fetch('/api/backtest/run, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
