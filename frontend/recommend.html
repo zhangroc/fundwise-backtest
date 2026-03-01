@@ -267,7 +267,7 @@
             content.innerHTML = '<div class="loading">加载中...</div>';
             
             try {
-                const response = await fetch(API_BASE_URL + API.recommend.funds, {
+                const response = await fetch('/api/recommend, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

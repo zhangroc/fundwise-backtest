@@ -343,7 +343,7 @@
         // 加载基金统计数据
         async function loadStats() {
             try {
-                const response = await fetch(API_BASE_URL + API.funds.screen + '?page=1&pageSize=1');
+                const response = await fetch('/api/v1/funds/screen?page=1&pageSize=1');
                 const data = await response.json();
                 if (data.total) {
                     document.getElementById('fundCount').textContent = data.total.toLocaleString();
