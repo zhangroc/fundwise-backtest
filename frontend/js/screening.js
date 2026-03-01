@@ -1,7 +1,7 @@
 // 基智回测 - 基金筛选页面逻辑
 
 // API 基础 URL - 自动检测当前主机
-const API_BASE_URL = window.location.protocol + '//' + window.location.hostname + ':3389/api';
+const API_BASE_URL = '';
 
 // 全局状态
 const ScreeningState = {
@@ -589,7 +589,7 @@ window.addFundToPortfolio = async (fundCode) => {
         const selectedPortfolio = portfolios[selectedIndex];
         
         // 调用 API 添加到组合
-        const addResponse = await fetch(`window.location.protocol + '//' + window.location.hostname + ':3389/api'/portfolios/${selectedPortfolio.id}/holdings`, {
+        const addResponse = await fetch(`''/portfolios/${selectedPortfolio.id}/holdings`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

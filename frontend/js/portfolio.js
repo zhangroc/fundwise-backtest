@@ -2,7 +2,7 @@
 
 // API 基础 URL
 // API 基础 URL - 自动检测当前主机
-const API_BASE_URL = window.location.protocol + '//' + window.location.hostname + ':3389/api';
+const API_BASE_URL = '';
 
 // 全局状态
 const PortfolioState = {
