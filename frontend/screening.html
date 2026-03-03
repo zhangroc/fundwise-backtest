@@ -14,57 +14,135 @@
         .filter-bar {
             background: white;
             border-radius: 12px;
-            padding: 1.25rem 1.5rem;
+            padding: 1.5rem;
             margin-bottom: 1.5rem;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
         
-        .filter-bar .filter-row {
+        .filter-section {
+            margin-bottom: 1rem;
+        }
+        
+        .filter-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .filter-section-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #4361ee;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .filter-row {
             display: flex;
             flex-wrap: wrap;
             gap: 1rem;
             align-items: flex-end;
         }
         
-        .filter-bar .filter-item {
+        .filter-item {
             flex: 1;
-            min-width: 150px;
-            max-width: 200px;
+            min-width: 140px;
+            max-width: 180px;
         }
         
-        .filter-bar .filter-item label {
-            font-size: 0.8rem;
+        .filter-item.wide {
+            max-width: 220px;
+        }
+        
+        .filter-item label {
+            font-size: 0.75rem;
             color: #64748b;
-            margin-bottom: 0.35rem;
+            margin-bottom: 0.25rem;
             display: block;
         }
         
-        .filter-bar .filter-item select,
-        .filter-bar .filter-item input {
+        .filter-item select,
+        .filter-item input {
             width: 100%;
             padding: 0.5rem 0.75rem;
             border: 1px solid #e2e8f0;
             border-radius: 6px;
-            font-size: 0.875rem;
+            font-size: 0.85rem;
             background: white;
         }
         
-        .filter-bar .filter-item select:focus,
-        .filter-bar .filter-item input:focus {
+        .filter-item select:focus,
+        .filter-item input:focus {
             outline: none;
             border-color: #4361ee;
             box-shadow: 0 0 0 3px rgba(67,97,238,0.1);
         }
         
-        .filter-bar .filter-actions {
+        .filter-item input[type="number"] {
+            width: 100%;
+        }
+        
+        .filter-actions {
             display: flex;
             gap: 0.5rem;
             align-items: flex-end;
+            margin-left: auto;
         }
         
-        .filter-bar .btn {
+        .btn {
             padding: 0.5rem 1rem;
             font-size: 0.875rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #4361ee;
+            color: white;
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background: #3651d4;
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .btn-secondary:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+        
+        /* 高级筛选切换 */
+        .advanced-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #f1f5f9;
+        }
+        
+        .advanced-toggle label {
+            font-size: 0.8rem;
+            color: #64748b;
+            cursor: pointer;
+        }
+        
+        .advanced-filters {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px dashed #e2e8f0;
+        }
+        
+        .advanced-filters.show {
+            display: block;
         }
         
         /* 结果统计 */
@@ -85,6 +163,20 @@
             color: #1e293b;
         }
         
+        .sort-select {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+        
+        .sort-select select {
+            padding: 0.35rem 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        
         /* 基金卡片表格 */
         .fund-table {
             width: 100%;
@@ -94,20 +186,35 @@
         
         .fund-table th {
             background: #f8fafc;
-            padding: 0.75rem 1rem;
+            padding: 0.75rem 0.75rem;
             text-align: left;
             font-weight: 600;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: #64748b;
             border-bottom: 2px solid #e2e8f0;
             position: sticky;
             top: 0;
+            white-space: nowrap;
+        }
+        
+        .fund-table th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .fund-table th.sortable:hover {
+            color: #4361ee;
+        }
+        
+        .fund-table th.sortable i {
+            margin-left: 0.25rem;
+            font-size: 0.65rem;
         }
         
         .fund-table td {
-            padding: 0.875rem 1rem;
+            padding: 0.75rem;
             border-bottom: 1px solid #f1f5f9;
-            font-size: 0.875rem;
+            font-size: 0.85rem;
         }
         
         .fund-table tr:hover {
@@ -117,10 +224,11 @@
         .fund-table .fund-code {
             font-weight: 600;
             color: #2563eb;
+            font-family: 'SF Mono', monospace;
         }
         
         .fund-table .fund-name {
-            max-width: 200px;
+            max-width: 180px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -128,9 +236,9 @@
         
         .fund-table .fund-type {
             display: inline-block;
-            padding: 0.2rem 0.5rem;
+            padding: 0.15rem 0.4rem;
             border-radius: 4px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             background: #f1f5f9;
             color: #64748b;
         }
@@ -140,13 +248,24 @@
             color: #2563eb;
         }
         
-        .fund-table .fund-size {
+        /* 指标颜色 */
+        .metric-positive {
+            color: #16a34a;
             font-weight: 500;
         }
         
+        .metric-negative {
+            color: #dc2626;
+            font-weight: 500;
+        }
+        
+        .metric-neutral {
+            color: #64748b;
+        }
+        
         .fund-table .fund-actions .btn {
-            padding: 0.35rem 0.75rem;
-            font-size: 0.75rem;
+            padding: 0.25rem 0.6rem;
+            font-size: 0.7rem;
         }
         
         /* 分页 */
@@ -200,6 +319,20 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
+        
+        /* 响应式 */
+        @media (max-width: 1200px) {
+            .filter-item {
+                max-width: 160px;
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .filter-item {
+                min-width: 120px;
+                max-width: 150px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -208,13 +341,13 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
-                <div class="logo-icon"><i class="fas fa-chart-line"></i></div>
-                <span class="logo-text">基智回测</span>
-            </div>
+                    <div class="logo-icon"><i class="fas fa-chart-line"></i></div>
+                    <span class="logo-text">基智回测</span>
+                </div>
             </div>
             <nav class="sidebar-nav">
                 <a href="index.html" class="nav-link"><i class="fas fa-home"></i><span>首页</span></a>
-                <a href="screening.html" class="nav-link"><i class="fas fa-filter"></i><span>基金筛选</span></a>
+                <a href="screening.html" class="nav-link active"><i class="fas fa-filter"></i><span>基金筛选</span></a>
                 <a href="recommend.html" class="nav-link"><i class="fas fa-lightbulb"></i><span>智能推荐</span></a>
                 <a href="portfolio.html" class="nav-link"><i class="fas fa-folder"></i><span>我的组合</span></a>
                 <a href="backtest.html" class="nav-link"><i class="fas fa-chart-line"></i><span>历史回测</span></a>
@@ -234,59 +367,120 @@
             <div class="page-content">
                 <!-- 筛选条件栏 -->
                 <div class="filter-bar">
-                    <div class="filter-row">
-                        <div class="filter-item">
-                            <label>基金类型</label>
-                            <select id="fundType">
-                                <option value="all">全部类型</option>
-                                <option value="股票型">股票型</option>
-                                <option value="混合型">混合型</option>
-                                <option value="债券型">债券型</option>
-                                <option value="指数型">指数型</option>
-                            </select>
+                    <!-- 基础筛选 -->
+                    <div class="filter-section">
+                        <div class="filter-section-title">
+                            <i class="fas fa-sliders-h"></i> 基础筛选
                         </div>
-                        <div class="filter-item">
-                            <label>风险等级</label>
-                            <select id="riskLevel">
-                                <option value="all">全部</option>
-                                <option value="保守">保守型</option>
-                                <option value="稳健">稳健型</option>
-                                <option value="积极">积极型</option>
-                            </select>
+                        <div class="filter-row">
+                            <div class="filter-item wide">
+                                <label>统计周期</label>
+                                <select id="period">
+                                    <option value="1m">近1月</option>
+                                    <option value="3m">近3月</option>
+                                    <option value="6m">近6月</option>
+                                    <option value="1y" selected>近1年</option>
+                                    <option value="2y">近2年</option>
+                                    <option value="3y">近3年</option>
+                                    <option value="5y">近5年</option>
+                                </select>
+                            </div>
+                            <div class="filter-item">
+                                <label>基金类型</label>
+                                <select id="fundType">
+                                    <option value="all">全部类型</option>
+                                    <option value="股票型">股票型</option>
+                                    <option value="混合型">混合型</option>
+                                    <option value="债券型">债券型</option>
+                                    <option value="指数型">指数型</option>
+                                    <option value="QDII">QDII</option>
+                                    <option value="FOF">FOF</option>
+                                </select>
+                            </div>
+                            <div class="filter-item">
+                                <label>风险等级</label>
+                                <select id="riskLevel">
+                                    <option value="all">全部</option>
+                                    <option value="保守">保守型</option>
+                                    <option value="稳健">稳健型</option>
+                                    <option value="积极">积极型</option>
+                                </select>
+                            </div>
+                            <div class="filter-item">
+                                <label>基金规模</label>
+                                <select id="fundSize">
+                                    <option value="all">全部</option>
+                                    <option value="2">2亿以上</option>
+                                    <option value="10">10亿以上</option>
+                                    <option value="50">50亿以上</option>
+                                    <option value="100">100亿以上</option>
+                                </select>
+                            </div>
+                            <div class="filter-item">
+                                <label>成立年限</label>
+                                <select id="minYears">
+                                    <option value="all">全部</option>
+                                    <option value="1">1年以上</option>
+                                    <option value="3">3年以上</option>
+                                    <option value="5">5年以上</option>
+                                </select>
+                            </div>
+                            <div class="filter-item">
+                                <label>指数基金</label>
+                                <select id="indexFundOnly">
+                                    <option value="false">全部基金</option>
+                                    <option value="true">仅指数基金</option>
+                                </select>
+                            </div>
+                            <div class="filter-actions">
+                                <button class="btn btn-primary" onclick="searchFunds()">
+                                    <i class="fas fa-search"></i> 筛选
+                                </button>
+                                <button class="btn btn-secondary" onclick="resetFilters()">
+                                    <i class="fas fa-redo"></i> 重置
+                                </button>
+                            </div>
                         </div>
-                        <div class="filter-item">
-                            <label>基金规模</label>
-                            <select id="fundSize">
-                                <option value="all">全部</option>
-                                <option value="10">10亿以上</option>
-                                <option value="50">50亿以上</option>
-                                <option value="100">100亿以上</option>
-                                <option value="200">200亿以上</option>
-                            </select>
-                        </div>
-                        <div class="filter-item">
-                            <label>成立年限</label>
-                            <select id="establishYears">
-                                <option value="all">全部</option>
-                                <option value="3">3年以上</option>
-                                <option value="5">5年以上</option>
-                                <option value="10">10年以上</option>
-                            </select>
-                        </div>
-                        <div class="filter-item">
-                            <label>只看指数基金</label>
-                            <select id="indexFundOnly">
-                                <option value="false">全部基金</option>
-                                <option value="true">仅指数基金</option>
-                            </select>
-                        </div>
-                        <div class="filter-actions">
-                            <button class="btn btn-primary" onclick="searchFunds()">
-                                <i class="fas fa-search"></i> 筛选
-                            </button>
-                            <button class="btn btn-secondary" onclick="resetFilters()">
-                                <i class="fas fa-redo"></i> 重置
-                            </button>
+                    </div>
+                    
+                    <!-- 高级筛选开关 -->
+                    <div class="advanced-toggle">
+                        <input type="checkbox" id="showAdvanced" onchange="toggleAdvanced()">
+                        <label for="showAdvanced">高级筛选（按指标过滤）</label>
+                    </div>
+                    
+                    <!-- 高级筛选条件 -->
+                    <div class="advanced-filters" id="advancedFilters">
+                        <div class="filter-section">
+                            <div class="filter-section-title">
+                                <i class="fas fa-chart-bar"></i> 指标筛选
+                            </div>
+                            <div class="filter-row">
+                                <div class="filter-item">
+                                    <label>最低收益率(%)</label>
+                                    <input type="number" id="minReturn" placeholder="如: 10" step="0.1">
+                                </div>
+                                <div class="filter-item">
+                                    <label>最大回撤(%)</label>
+                                    <input type="number" id="maxDrawdown" placeholder="如: 20" step="0.1">
+                                </div>
+                                <div class="filter-item">
+                                    <label>最低夏普比率</label>
+                                    <input type="number" id="minSharpe" placeholder="如: 1.0" step="0.1">
+                                </div>
+                                <div class="filter-item">
+                                    <label>最大波动率(%)</label>
+                                    <input type="number" id="maxVolatility" placeholder="如: 30" step="0.1">
+                                </div>
+                                <div class="filter-item">
+                                    <label>最低胜率(%)</label>
+                                    <input type="number" id="minWinRate" placeholder="如: 50" step="0.1">
+                                </div>
+                                <div class="filter-item">
+                                    <label>最低Calmar比率</label>
+                                    <input type="number" id="minCalmar" placeholder="如: 1.0" step="0.1">
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -294,11 +488,27 @@
                 <!-- 结果信息 -->
                 <div class="results-info">
                     <span class="count">找到 <strong id="totalCount">0</strong> 只符合条件的基金</span>
+                    <div class="sort-select">
+                        <span>排序：</span>
+                        <select id="sortBy" onchange="searchFunds()">
+                            <option value="return_period">收益率</option>
+                            <option value="sharpe_ratio">夏普比率</option>
+                            <option value="max_drawdown">最大回撤</option>
+                            <option value="volatility">波动率</option>
+                            <option value="calmar_ratio">Calmar比率</option>
+                            <option value="win_rate">胜率</option>
+                            <option value="total_assets">基金规模</option>
+                        </select>
+                        <select id="sortOrder" onchange="searchFunds()">
+                            <option value="desc">从高到低</option>
+                            <option value="asc">从低到高</option>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- 基金列表 -->
                 <div class="card">
-                    <div class="card-body" style="padding: 0;">
+                    <div class="card-body" style="padding: 0; overflow-x: auto;">
                         <div id="loading" class="loading">
                             <i class="fas fa-spinner"></i>
                             <div>加载中...</div>
@@ -310,10 +520,20 @@
                                         <th>基金代码</th>
                                         <th>基金名称</th>
                                         <th>类型</th>
-                                        <th>风险等级</th>
+                                        <th>风险</th>
                                         <th>规模(亿)</th>
-                                        <th>成立时间</th>
-                                        <th>净值记录</th>
+                                        <th class="sortable" onclick="sortBy('return_period')">
+                                            收益率 <i class="fas fa-sort"></i>
+                                        </th>
+                                        <th class="sortable" onclick="sortBy('sharpe_ratio')">
+                                            夏普 <i class="fas fa-sort"></i>
+                                        </th>
+                                        <th class="sortable" onclick="sortBy('max_drawdown')">
+                                            回撤 <i class="fas fa-sort"></i>
+                                        </th>
+                                        <th class="sortable" onclick="sortBy('volatility')">
+                                            波动 <i class="fas fa-sort"></i>
+                                        </th>
                                         <th>操作</th>
                                     </tr>
                                 </thead>
@@ -335,27 +555,79 @@
         let currentPage = 1;
         const pageSize = 20;
         let totalCount = 0;
+        let currentSortBy = 'return_period';
+        let currentSortOrder = 'desc';
 
         // 页面加载时获取数据
         document.addEventListener('DOMContentLoaded', () => {
             searchFunds();
         });
 
+        function toggleAdvanced() {
+            const advanced = document.getElementById('advancedFilters');
+            const checkbox = document.getElementById('showAdvanced');
+            if (checkbox.checked) {
+                advanced.classList.add('show');
+            } else {
+                advanced.classList.remove('show');
+            }
+        }
+
+        function sortBy(field) {
+            if (currentSortBy === field) {
+                currentSortOrder = currentSortOrder === 'desc' ? 'asc' : 'desc';
+            } else {
+                currentSortBy = field;
+                currentSortOrder = 'desc';
+            }
+            document.getElementById('sortBy').value = field;
+            document.getElementById('sortOrder').value = currentSortOrder;
+            searchFunds();
+        }
+
         async function searchFunds() {
             showLoading(true);
             
+            // 获取基础筛选条件
+            const period = document.getElementById('period').value;
             const fundType = document.getElementById('fundType').value;
+            const riskLevel = document.getElementById('riskLevel').value;
             const fundSize = document.getElementById('fundSize').value;
-            const establishYears = document.getElementById('establishYears').value;
+            const minYears = document.getElementById('minYears').value;
             const indexFundOnly = document.getElementById('indexFundOnly').value === 'true';
             
-            // 使用 api-client
-            let url = '/api/v1/funds/screen?page=' + currentPage + '&pageSize=' + pageSize;
+            // 获取高级筛选条件
+            const minReturn = document.getElementById('minReturn').value;
+            const maxDrawdown = document.getElementById('maxDrawdown').value;
+            const minSharpe = document.getElementById('minSharpe').value;
+            const maxVolatility = document.getElementById('maxVolatility').value;
+            const minWinRate = document.getElementById('minWinRate').value;
+            const minCalmar = document.getElementById('minCalmar').value;
             
+            // 排序
+            currentSortBy = document.getElementById('sortBy').value;
+            currentSortOrder = document.getElementById('sortOrder').value;
+            
+            // 构建URL
+            let url = '/api/v1/funds/screen?page=' + currentPage + '&pageSize=' + pageSize;
+            url += '&period=' + period;
+            url += '&sortBy=' + currentSortBy;
+            url += '&sortOrder=' + currentSortOrder;
+            
+            // 基础条件
             if (fundType !== 'all') url += '&fundType=' + encodeURIComponent(fundType);
+            if (riskLevel !== 'all') url += '&riskLevel=' + encodeURIComponent(riskLevel);
             if (fundSize !== 'all') url += '&minSize=' + fundSize;
-            if (establishYears !== 'all') url += '&minYears=' + establishYears;
+            if (minYears !== 'all') url += '&minYears=' + minYears;
             if (indexFundOnly) url += '&indexFundOnly=true';
+            
+            // 高级条件
+            if (minReturn) url += '&minReturn=' + minReturn;
+            if (maxDrawdown) url += '&maxDrawdown=' + maxDrawdown;
+            if (minSharpe) url += '&minSharpe=' + minSharpe;
+            if (maxVolatility) url += '&maxVolatility=' + maxVolatility;
+            if (minWinRate) url += '&minWinRate=' + minWinRate;
+            if (minCalmar) url += '&minCalmar=' + minCalmar;
             
             try {
                 const response = await fetch(url);
@@ -366,6 +638,8 @@
                     renderFunds(data.data || []);
                     document.getElementById('totalCount').textContent = totalCount.toLocaleString();
                     renderPagination();
+                } else {
+                    alert('加载失败: ' + (data.message || '未知错误'));
                 }
             } catch (e) {
                 console.error('加载失败:', e);
@@ -379,24 +653,44 @@
             const tbody = document.getElementById('fundTableBody');
             
             if (funds.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem; color: #64748b;">暂无符合条件的基金</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 2rem; color: #64748b;">暂无符合条件的基金，请调整筛选条件</td></tr>';
                 return;
             }
             
-            tbody.innerHTML = funds.map(fund => `
+            tbody.innerHTML = funds.map(fund => {
+                // 格式化收益率
+                const returnRate = fund.returnRate || 0;
+                const returnClass = returnRate >= 0 ? 'metric-positive' : 'metric-negative';
+                const returnText = (returnRate >= 0 ? '+' : '') + returnRate.toFixed(2) + '%';
+                
+                // 格式化夏普比率
+                const sharpe = fund.sharpeRatio || 0;
+                const sharpeClass = sharpe >= 1 ? 'metric-positive' : sharpe >= 0 ? 'metric-neutral' : 'metric-negative';
+                
+                // 格式化最大回撤
+                const maxDd = Math.abs(fund.maxDrawdown || 0);
+                const ddClass = maxDd <= 10 ? 'metric-positive' : maxDd <= 20 ? 'metric-neutral' : 'metric-negative';
+                
+                // 格式化波动率
+                const vol = fund.volatility || 0;
+                const volClass = vol <= 15 ? 'metric-positive' : vol <= 25 ? 'metric-neutral' : 'metric-negative';
+                
+                return `
                 <tr>
                     <td class="fund-code">${fund.code}</td>
                     <td class="fund-name" title="${fund.name}">${fund.name}</td>
-                    <td><span class="fund-type ${fund.isIndexFund ? 'index' : ''}">${fund.type || '混合型'}</span></td>
+                    <td><span class="fund-type ${fund.isIndexFund ? 'index' : ''}">${fund.type || '-'}</span></td>
                     <td>${fund.riskLevel || '-'}</td>
-                    <td class="fund-size">${fund.totalAssets ? fund.totalAssets.toFixed(2) : '-'}</td>
-                    <td>${fund.establishedYears ? fund.establishedYears + '年' : '-'}</td>
-                    <td>${fund.navRecordCount || 0}条</td>
+                    <td>${fund.totalAssets ? fund.totalAssets.toFixed(1) : '-'}</td>
+                    <td class="${returnClass}">${returnText}</td>
+                    <td class="${sharpeClass}">${sharpe.toFixed(2)}</td>
+                    <td class="${ddClass}">${maxDd.toFixed(2)}%</td>
+                    <td class="${volClass}">${vol.toFixed(2)}%</td>
                     <td class="fund-actions">
                         <a href="detail.html?code=${fund.code}" class="btn btn-sm btn-secondary">详情</a>
                     </td>
                 </tr>
-            `).join('');
+            `}).join('');
         }
 
         function renderPagination() {
@@ -409,7 +703,29 @@
             }
             
             let html = `<button ${currentPage === 1 ? 'disabled' : ''} onclick="goPage(${currentPage - 1})">上一页</button>`;
-            html += `<span class="page-info">${currentPage} / ${totalPages}</span>`;
+            
+            // 显示页码
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+            
+            if (startPage > 1) {
+                html += `<button onclick="goPage(1)">1</button>`;
+                if (startPage > 2) html += `<span class="page-info">...</span>`;
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                if (i === currentPage) {
+                    html += `<button style="background: #4361ee; color: white; border-color: #4361ee;">${i}</button>`;
+                } else {
+                    html += `<button onclick="goPage(${i})">${i}</button>`;
+                }
+            }
+            
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) html += `<span class="page-info">...</span>`;
+                html += `<button onclick="goPage(${totalPages})">${totalPages}</button>`;
+            }
+            
             html += `<button ${currentPage >= totalPages ? 'disabled' : ''} onclick="goPage(${currentPage + 1})">下一页</button>`;
             
             pagination.innerHTML = html;
@@ -422,11 +738,32 @@
         }
 
         function resetFilters() {
+            // 重置基础筛选
+            document.getElementById('period').value = '1y';
             document.getElementById('fundType').value = 'all';
             document.getElementById('riskLevel').value = 'all';
             document.getElementById('fundSize').value = 'all';
-            document.getElementById('establishYears').value = 'all';
+            document.getElementById('minYears').value = 'all';
             document.getElementById('indexFundOnly').value = 'false';
+            
+            // 重置高级筛选
+            document.getElementById('minReturn').value = '';
+            document.getElementById('maxDrawdown').value = '';
+            document.getElementById('minSharpe').value = '';
+            document.getElementById('maxVolatility').value = '';
+            document.getElementById('minWinRate').value = '';
+            document.getElementById('minCalmar').value = '';
+            
+            // 重置排序
+            document.getElementById('sortBy').value = 'return_period';
+            document.getElementById('sortOrder').value = 'desc';
+            currentSortBy = 'return_period';
+            currentSortOrder = 'desc';
+            
+            // 关闭高级筛选
+            document.getElementById('showAdvanced').checked = false;
+            document.getElementById('advancedFilters').classList.remove('show');
+            
             currentPage = 1;
             searchFunds();
         }

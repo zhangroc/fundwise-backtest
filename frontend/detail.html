@@ -9,137 +9,316 @@
     <link rel="stylesheet" href="css/brand.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="lib/chart.min.js"></script>
-    <script src="includes/api-client.js"></script>
     <style>
         /* 详情页样式 */
         .detail-header {
-            background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
+            background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            border-radius: 16px;
+            padding: 2rem;
             margin-bottom: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
+            color: white;
         }
         
         .detail-header .fund-title {
             display: flex;
-            align-items: center;
+            align-items: baseline;
             gap: 1rem;
+            margin-bottom: 0.5rem;
         }
         
         .detail-header .fund-code {
-            font-size: 0.9rem;
-            color: #64748b;
-            font-weight: normal;
+            font-size: 1rem;
+            opacity: 0.9;
+            font-family: 'SF Mono', monospace;
         }
         
         .detail-header .fund-name {
-            font-size: 1.5rem;
+            font-size: 1.75rem;
             font-weight: 700;
-            color: #1e293b;
             margin: 0;
         }
         
-        .detail-header .fund-meta {
+        .detail-header .fund-badges {
             display: flex;
-            gap: 1.5rem;
-            margin-top: 0.5rem;
+            gap: 0.75rem;
+            margin-top: 1rem;
         }
         
-        .detail-header .meta-item {
-            font-size: 0.85rem;
-            color: #64748b;
+        .detail-header .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.35rem 0.75rem;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-size: 0.8rem;
         }
         
-        .detail-header .meta-item i {
-            margin-right: 0.35rem;
+        .detail-header .fund-stats {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.2);
         }
         
-        .detail-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
+        .detail-header .stat-item {
+            text-align: center;
+        }
+        
+        .detail-header .stat-label {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            margin-bottom: 0.25rem;
+        }
+        
+        .detail-header .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        
+        /* 搜索框 */
+        .search-box {
+            display: flex;
+            gap: 0.75rem;
             margin-bottom: 1.5rem;
         }
         
-        .detail-metric {
-            background: white;
-            border-radius: 12px;
-            padding: 1.25rem;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        .search-box input {
+            flex: 1;
+            max-width: 300px;
+            padding: 0.65rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.95rem;
         }
         
-        .detail-metric .metric-label {
+        .search-box input:focus {
+            outline: none;
+            border-color: #4361ee;
+            box-shadow: 0 0 0 3px rgba(67,97,238,0.1);
+        }
+        
+        .search-box button {
+            padding: 0.65rem 1.25rem;
+            background: #4361ee;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        
+        .search-box button:hover {
+            background: #3651d4;
+        }
+        
+        /* 卡片通用样式 */
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .card-title i {
+            color: #4361ee;
+        }
+        
+        .card-body {
+            padding: 1.25rem;
+        }
+        
+        /* 时间段选择 */
+        .period-tabs {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .period-tab {
+            padding: 0.4rem 0.8rem;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
             font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .period-tab:hover {
+            border-color: #4361ee;
+            color: #4361ee;
+        }
+        
+        .period-tab.active {
+            background: #4361ee;
+            color: white;
+            border-color: #4361ee;
+        }
+        
+        /* 阶段收益网格 */
+        .returns-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 1rem;
+        }
+        
+        .return-item {
+            text-align: center;
+            padding: 0.75rem;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+        
+        .return-item .label {
+            font-size: 0.75rem;
             color: #64748b;
+            margin-bottom: 0.25rem;
+        }
+        
+        .return-item .value {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        
+        .return-item .value.positive { color: #16a34a; }
+        .return-item .value.negative { color: #dc2626; }
+        .return-item .value.neutral { color: #64748b; }
+        
+        /* 核心指标 */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        
+        .metric-card {
+            padding: 1rem;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .metric-card.highlight {
+            background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            color: white;
+            border: none;
+        }
+        
+        .metric-card .metric-label {
+            font-size: 0.75rem;
+            opacity: 0.8;
             margin-bottom: 0.35rem;
         }
         
-        .detail-metric .metric-value {
-            font-size: 1.25rem;
+        .metric-card .metric-value {
+            font-size: 1.35rem;
             font-weight: 700;
-            color: #1e293b;
         }
         
-        .detail-metric .metric-value.positive { color: #10b981; }
-        .detail-metric .metric-value.negative { color: #ef4444; }
-        
-        .chart-card {
-            background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            margin-bottom: 1.5rem;
+        .metric-card.highlight .metric-value {
+            font-size: 1.5rem;
         }
         
-        .chart-card h3 {
-            font-size: 1rem;
-            color: #1e293b;
-            margin: 0 0 1rem 0;
+        .metric-card .metric-unit {
+            font-size: 0.7rem;
+            opacity: 0.7;
         }
         
-        .chart-card .chart-container {
+        /* 同类排名 */
+        .ranking-card {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+        
+        .ranking-card .ranking-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        
+        .ranking-card .ranking-desc {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin-top: 0.35rem;
+        }
+        
+        /* 图表容器 */
+        .chart-container {
             height: 300px;
+            position: relative;
         }
         
-        .info-card {
-            background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        .chart-container.half {
+            height: 220px;
         }
         
-        .info-card h3 {
-            font-size: 1rem;
-            color: #1e293b;
-            margin: 0 0 1rem 0;
-            padding-bottom: 0.75rem;
-            border-bottom: 1px solid #f1f5f9;
-        }
-        
-        .info-table {
+        /* 月度收益表格 */
+        .monthly-table {
             width: 100%;
+            border-collapse: collapse;
         }
         
-        .info-table th,
-        .info-table td {
-            padding: 0.75rem;
+        .monthly-table th,
+        .monthly-table td {
+            padding: 0.6rem 0.75rem;
             text-align: left;
             border-bottom: 1px solid #f1f5f9;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
         
-        .info-table th {
+        .monthly-table th {
+            background: #f8fafc;
+            font-weight: 600;
             color: #64748b;
-            font-weight: 500;
-            width: 40%;
+            font-size: 0.75rem;
         }
         
-        .info-table td {
-            color: #1e293b;
+        .monthly-table tr:hover {
+            background: #f8fafc;
+        }
+        
+        .monthly-return {
+            font-weight: 600;
+        }
+        
+        .monthly-return.positive { color: #16a34a; }
+        .monthly-return.negative { color: #dc2626; }
+        
+        /* 双列布局 */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        
+        @media (max-width: 992px) {
+            .two-columns {
+                grid-template-columns: 1fr;
+            }
         }
         
         /* 加载状态 */
@@ -159,29 +338,28 @@
             to { transform: rotate(360deg); }
         }
         
-        /* 搜索框 */
-        .search-box {
-            display: flex;
-            gap: 0.75rem;
-            margin-bottom: 1.5rem;
+        /* 滚动条美化 */
+        .scroll-container {
+            max-height: 400px;
+            overflow-y: auto;
         }
         
-        .search-box input {
-            flex: 1;
-            padding: 0.75rem 1rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 0.95rem;
+        .scroll-container::-webkit-scrollbar {
+            width: 6px;
         }
         
-        .search-box button {
-            padding: 0.75rem 1.5rem;
-            background: #2563eb;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
+        .scroll-container::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+        
+        .scroll-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        
+        .scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
     </style>
 </head>
@@ -191,20 +369,17 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
-                <div class="logo-icon"><i class="fas fa-chart-line"></i></div>
-                <span class="logo-text">基智回测</span>
-            </div>
+                    <div class="logo-icon"><i class="fas fa-chart-line"></i></div>
+                    <span class="logo-text">基智回测</span>
+                </div>
             </div>
             <nav class="sidebar-nav">
-                <div class="nav-section">
-                    <a href="index.html" class="nav-link"><i class="fas fa-home"></i><span>首页</span></a>
-                    <a href="screening.html" class="nav-link"><i class="fas fa-filter"></i><span>基金筛选</span></a>
-                    <a href="portfolio.html" class="nav-link"><i class="fas fa-briefcase"></i><span>我的组合</span></a>
-                    <a href="backtest.html" class="nav-link"><i class="fas fa-chart-area"></i><span>历史回测</span></a>
-                    <a href="recommend.html" class="nav-link"><i class="fas fa-lightbulb"></i><span>智能推荐</span></a>
-                    <a href="compare.html" class="nav-link"><i class="fas fa-balance-scale"></i><span>组合对比</span></a>
-                    <a href="detail.html" class="nav-link active"><i class="fas fa-chart-bar"></i><span>基金详情</span></a>
-                </div>
+                <a href="index.html" class="nav-link"><i class="fas fa-home"></i><span>首页</span></a>
+                <a href="screening.html" class="nav-link"><i class="fas fa-filter"></i><span>基金筛选</span></a>
+                <a href="recommend.html" class="nav-link"><i class="fas fa-lightbulb"></i><span>智能推荐</span></a>
+                <a href="portfolio.html" class="nav-link"><i class="fas fa-folder"></i><span>我的组合</span></a>
+                <a href="backtest.html" class="nav-link"><i class="fas fa-chart-line"></i><span>历史回测</span></a>
+                <a href="compare.html" class="nav-link"><i class="fas fa-balance-scale"></i><span>组合对比</span></a>
             </nav>
         </aside>
 
@@ -213,99 +388,145 @@
             <header class="page-header">
                 <div>
                     <h1 class="page-title">基金详情</h1>
-                    <p class="page-subtitle">查看基金详细信息和历史表现</p>
+                    <p class="page-subtitle">全面分析基金表现</p>
                 </div>
             </header>
 
             <div class="page-content">
                 <!-- 搜索框 -->
                 <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="输入基金代码搜索" value="">
+                    <input type="text" id="searchInput" placeholder="输入基金代码搜索">
                     <button onclick="searchFund()"><i class="fas fa-search"></i> 搜索</button>
                 </div>
                 
                 <div id="loading" class="loading" style="display: none;">
                     <i class="fas fa-spinner"></i>
-                    <div>加载中...</div>
+                    <div style="margin-top: 1rem;">加载中...</div>
                 </div>
                 
                 <div id="content" style="display: none;">
                     <!-- 基金头部信息 -->
                     <div class="detail-header">
                         <div class="fund-title">
-                            <div>
-                                <span class="fund-code" id="fundCode">--</span>
-                                <h1 class="fund-name" id="fundName">--</h1>
+                            <span class="fund-code" id="fundCode">--</span>
+                            <h1 class="fund-name" id="fundName">--</h1>
+                        </div>
+                        <div class="fund-badges">
+                            <span class="badge" id="fundType"><i class="fas fa-tag"></i> --</span>
+                            <span class="badge" id="riskLevel"><i class="fas fa-shield-alt"></i> --</span>
+                            <span class="badge" id="company"><i class="fas fa-building"></i> --</span>
+                        </div>
+                        <div class="fund-stats">
+                            <div class="stat-item">
+                                <div class="stat-label">成立日期</div>
+                                <div class="stat-value" id="establishDate">--</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">最新净值</div>
+                                <div class="stat-value" id="latestNav">--</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">数据区间</div>
+                                <div class="stat-value" id="dataRange" style="font-size: 0.9rem;">--</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">数据天数</div>
+                                <div class="stat-value" id="dataDays">--</div>
                             </div>
                         </div>
-                        <div class="fund-meta">
-                            <span class="meta-item"><i class="fas fa-building"></i> <span id="fundCompany">--</span></span>
-                            <span class="meta-item"><i class="fas fa-calendar"></i> 成立: <span id="establishDate">--</span></span>
-                            <span class="meta-item"><i class="fas fa-chart-pie"></i> <span id="fundType">--</span></span>
+                    </div>
+                    
+                    <!-- 阶段收益率 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-chart-line"></i> 阶段收益率</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="returns-grid" id="returnsGrid">
+                                <!-- 动态填充 -->
+                            </div>
                         </div>
                     </div>
                     
-                    <!-- 核心指标 -->
-                    <div class="detail-grid">
-                        <div class="detail-metric">
-                            <div class="metric-label">基金规模</div>
-                            <div class="metric-value" id="totalAssets">--</div>
+                    <!-- 时间段选择 & 核心风险指标 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-tachometer-alt"></i> 核心风险指标</h3>
+                            <div class="period-tabs" id="periodTabs">
+                                <button class="period-tab" data-period="1m">近1月</button>
+                                <button class="period-tab" data-period="3m">近3月</button>
+                                <button class="period-tab" data-period="6m">近半年</button>
+                                <button class="period-tab active" data-period="1y">近1年</button>
+                                <button class="period-tab" data-period="2y">近2年</button>
+                                <button class="period-tab" data-period="3y">近3年</button>
+                            </div>
                         </div>
-                        <div class="detail-metric">
-                            <div class="metric-label">今年来收益</div>
-                            <div class="metric-value positive" id="yearReturn">--</div>
-                        </div>
-                        <div class="detail-metric">
-                            <div class="metric-label">近一年收益</div>
-                            <div class="metric-value positive" id="oneYearReturn">--</div>
-                        </div>
-                        <div class="detail-metric">
-                            <div class="metric-label">净值记录</div>
-                            <div class="metric-value" id="navRecordCount">--</div>
-                        </div>
-                    </div>
-                    
-                    <!-- 净值走势图表 -->
-                    <div class="chart-card">
-                        <h3><i class="fas fa-chart-line"></i> 净值走势</h3>
-                        <div class="chart-container">
-                            <canvas id="navChart"></canvas>
+                        <div class="card-body">
+                            <div class="metrics-grid" id="metricsGrid">
+                                <!-- 动态填充 -->
+                            </div>
                         </div>
                     </div>
                     
-                    <!-- 基本信息 -->
-                    <div class="info-card">
-                        <h3><i class="fas fa-info-circle"></i> 基本信息</h3>
-                        <table class="info-table">
-                            <tr>
-                                <th>基金代码</th>
-                                <td id="infoCode">--</td>
-                            </tr>
-                            <tr>
-                                <th>基金全称</th>
-                                <td id="infoName">--</td>
-                            </tr>
-                            <tr>
-                                <th>基金管理公司</th>
-                                <td id="infoCompany">--</td>
-                            </tr>
-                            <tr>
-                                <th>基金类型</th>
-                                <td id="infoType">--</td>
-                            </tr>
-                            <tr>
-                                <th>风险等级</th>
-                                <td id="infoRisk">--</td>
-                            </tr>
-                            <tr>
-                                <th>成立日期</th>
-                                <td id="infoEstablish">--</td>
-                            </tr>
-                            <tr>
-                                <th>管理费率</th>
-                                <td id="infoFee">--</td>
-                            </tr>
-                        </table>
+                    <!-- 净值走势图 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-chart-area"></i> 净值走势</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="navChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 双列布局：月度收益 + 滚动指标 -->
+                    <div class="two-columns">
+                        <!-- 月度收益分布 -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fas fa-calendar-alt"></i> 月度收益分布</h3>
+                            </div>
+                            <div class="card-body" style="padding: 0;">
+                                <div class="scroll-container">
+                                    <table class="monthly-table">
+                                        <thead>
+                                            <tr>
+                                                <th>月份</th>
+                                                <th>收益率</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="monthlyTable">
+                                            <!-- 动态填充 -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 滚动年化收益与波动率 -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fas fa-wave-square"></i> 滚动年化收益与波动率</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="rollingChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 回撤分析 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-arrow-down"></i> 回撤分析</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container half">
+                                <canvas id="drawdownChart"></canvas>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -313,7 +534,11 @@
     </div>
 
     <script>
+        let currentFundCode = null;
+        let currentPeriod = '1y';
         let navChart = null;
+        let rollingChart = null;
+        let drawdownChart = null;
         
         // 获取 URL 参数
         const urlParams = new URLSearchParams(window.location.search);
@@ -324,6 +549,16 @@
             searchFund();
         }
         
+        // 时间段选择事件
+        document.querySelectorAll('.period-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                currentPeriod = this.dataset.period;
+                loadDetail();
+            });
+        });
+        
         // 搜索基金
         async function searchFund() {
             const code = document.getElementById('searchInput').value.trim();
@@ -332,84 +567,323 @@
                 return;
             }
             
+            currentFundCode = code;
             document.getElementById('loading').style.display = 'block';
             document.getElementById('content').style.display = 'none';
             
+            await loadDetail();
+        }
+        
+        async function loadDetail() {
             try {
-                const response = await fetch('/api/v1/funds/' + code);
+                const response = await fetch(`/api/v1/funds/${currentFundCode}/detail?period=${currentPeriod}`);
                 const result = await response.json();
                 
                 if (result.success) {
-                    renderFundDetail(result.data);
+                    renderDetail(result);
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('content').style.display = 'block';
                 } else {
-                    alert('基金不存在');
+                    alert('加载失败: ' + (result.message || '基金不存在'));
+                    document.getElementById('loading').style.display = 'none';
                 }
             } catch (e) {
                 console.error('加载失败:', e);
                 alert('加载失败，请稍后重试');
-            } finally {
                 document.getElementById('loading').style.display = 'none';
             }
         }
         
-        function renderFundDetail(fund) {
-            document.getElementById('content').style.display = 'block';
-            
-            document.getElementById('fundCode').textContent = fund.code;
-            document.getElementById('fundName').textContent = fund.name;
-            document.getElementById('fundCompany').textContent = fund.company || '--';
-            document.getElementById('fundType').textContent = fund.type || '--';
-            document.getElementById('establishDate').textContent = fund.establishmentDate || '--';
-            
-            document.getElementById('totalAssets').textContent = fund.totalAssets ? fund.totalAssets.toFixed(2) + ' 亿' : '--';
-            document.getElementById('yearReturn').textContent = '+' + (Math.random() * 20).toFixed(2) + '%';
-            document.getElementById('oneYearReturn').textContent = '+' + (Math.random() * 30).toFixed(2) + '%';
-            document.getElementById('navRecordCount').textContent = (fund.navRecordCount || 0) + ' 条';
+        function renderDetail(data) {
+            const info = data.info;
+            const returns = data.returns;
+            const metrics = data.riskMetrics;
+            const navHistory = data.navHistory;
+            const monthlyReturns = data.monthlyReturns;
+            const rollingMetrics = data.rollingMetrics;
+            const drawdown = data.drawdownAnalysis;
+            const dataRange = data.dataRange;
             
             // 基本信息
-            document.getElementById('infoCode').textContent = fund.code;
-            document.getElementById('infoName').textContent = fund.name;
-            document.getElementById('infoCompany').textContent = fund.company || '--';
-            document.getElementById('infoType').textContent = fund.type || '--';
-            document.getElementById('infoRisk').textContent = fund.riskLevel || '--';
-            document.getElementById('infoEstablish').textContent = fund.establishmentDate || '--';
-            document.getElementById('infoFee').textContent = fund.managementFeeRate ? (fund.managementFeeRate * 100).toFixed(2) + '%' : '--';
+            document.getElementById('fundCode').textContent = info.code;
+            document.getElementById('fundName').textContent = info.name;
+            document.getElementById('fundType').innerHTML = `<i class="fas fa-tag"></i> ${info.type || '--'}`;
+            document.getElementById('riskLevel').innerHTML = `<i class="fas fa-shield-alt"></i> ${info.riskLevel || '--'}`;
+            document.getElementById('company').innerHTML = `<i class="fas fa-building"></i> ${info.company || '--'}`;
+            document.getElementById('establishDate').textContent = info.establishmentDate || '--';
             
-            // 绘制图表
-            drawChart();
+            // 最新净值
+            if (navHistory && navHistory.length > 0) {
+                const latest = navHistory[navHistory.length - 1];
+                document.getElementById('latestNav').textContent = latest.nav.toFixed(3);
+            }
+            
+            // 数据区间
+            if (dataRange) {
+                document.getElementById('dataRange').textContent = `${dataRange.start} 至 ${dataRange.end}`;
+                document.getElementById('dataDays').textContent = dataRange.totalDays + ' 天';
+            }
+            
+            // 阶段收益率
+            renderReturns(returns);
+            
+            // 核心指标
+            renderMetrics(metrics, data.peerRanking);
+            
+            // 净值走势图
+            renderNavChart(navHistory);
+            
+            // 月度收益表格
+            renderMonthlyTable(monthlyReturns);
+            
+            // 滚动指标图
+            renderRollingChart(rollingMetrics);
+            
+            // 回撤分析图
+            renderDrawdownChart(navHistory);
         }
         
-        function drawChart() {
+        function renderReturns(returns) {
+            const container = document.getElementById('returnsGrid');
+            const items = [
+                { label: '近1月', key: 'return1m' },
+                { label: '近3月', key: 'return3m' },
+                { label: '近半年', key: 'return6m' },
+                { label: '近1年', key: 'return1y' },
+                { label: '近2年', key: 'return2y' },
+                { label: '近3年', key: 'return3y' },
+                { label: '成立以来', key: 'returnTotal' }
+            ];
+            
+            container.innerHTML = items.map(item => {
+                const value = returns[item.key];
+                const displayValue = value !== null ? value.toFixed(2) + '%' : '--';
+                const cssClass = value === null ? 'neutral' : (value >= 0 ? 'positive' : 'negative');
+                return `
+                    <div class="return-item">
+                        <div class="label">${item.label}</div>
+                        <div class="value ${cssClass}">${value !== null && value >= 0 ? '+' : ''}${displayValue}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function renderMetrics(metrics, ranking) {
+            const container = document.getElementById('metricsGrid');
+            
+            container.innerHTML = `
+                <div class="metric-card highlight">
+                    <div class="metric-label">时间段收益</div>
+                    <div class="metric-value">${metrics.returnPeriod >= 0 ? '+' : ''}${metrics.returnPeriod.toFixed(2)}%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">年化收益</div>
+                    <div class="metric-value">${metrics.annualReturn >= 0 ? '+' : ''}${metrics.annualReturn.toFixed(2)}%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">年化波动</div>
+                    <div class="metric-value">${metrics.volatility.toFixed(2)}%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">夏普比率</div>
+                    <div class="metric-value">${metrics.sharpeRatio.toFixed(2)}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">最大回撤</div>
+                    <div class="metric-value" style="color: #dc2626;">-${Math.abs(metrics.maxDrawdown).toFixed(2)}%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">卡尔马比率</div>
+                    <div class="metric-value">${metrics.calmarRatio.toFixed(2)}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">胜率</div>
+                    <div class="metric-value">${metrics.winRate.toFixed(1)}%</div>
+                </div>
+                <div class="ranking-card">
+                    <div class="metric-label">同类排名</div>
+                    <div class="ranking-value">${ranking.rankLevel || '--'}</div>
+                    <div class="ranking-desc">${ranking.peerCount ? `共 ${ranking.peerCount} 只同类基金` : ''}</div>
+                </div>
+            `;
+        }
+        
+        function renderNavChart(navHistory) {
             const ctx = document.getElementById('navChart').getContext('2d');
             
             if (navChart) navChart.destroy();
             
-            // 模拟数据
-            const dates = [];
-            const values = [];
-            const baseDate = new Date('2024-01-01');
-            let value = 1.0;
-            
-            for (let i = 0; i < 250; i++) {
-                const date = new Date(baseDate);
-                date.setDate(date.getDate() + i);
-                dates.push(date.toISOString().split('T')[0]);
-                value = value * (1 + (Math.random() - 0.48) * 0.02);
-                values.push(value);
-            }
+            const labels = navHistory.map(n => n.date);
+            const values = navHistory.map(n => n.nav);
             
             navChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: dates,
+                    labels: labels,
                     datasets: [{
                         label: '单位净值',
                         data: values,
-                        borderColor: '#2563eb',
-                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        borderColor: '#4361ee',
+                        backgroundColor: 'rgba(67, 97, 238, 0.1)',
                         fill: true,
-                        tension: 0.4,
-                        pointRadius: 0
+                        tension: 0.3,
+                        pointRadius: 0,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return '净值: ' + context.raw.toFixed(4);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            ticks: {
+                                maxTicksLimit: 10,
+                                font: { size: 10 }
+                            }
+                        },
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                font: { size: 10 }
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+        
+        function renderMonthlyTable(monthlyReturns) {
+            const tbody = document.getElementById('monthlyTable');
+            
+            if (!monthlyReturns || monthlyReturns.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="2" style="text-align: center; color: #64748b;">暂无数据</td></tr>';
+                return;
+            }
+            
+            // 逆序显示，最新的在上面
+            const sorted = [...monthlyReturns].reverse();
+            
+            tbody.innerHTML = sorted.map(item => {
+                const ret = item['return'];
+                const cssClass = ret >= 0 ? 'positive' : 'negative';
+                const sign = ret >= 0 ? '+' : '';
+                return `
+                    <tr>
+                        <td>${item.month}</td>
+                        <td class="monthly-return ${cssClass}">${sign}${ret.toFixed(2)}%</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function renderRollingChart(rollingMetrics) {
+            const ctx = document.getElementById('rollingChart').getContext('2d');
+            
+            if (rollingChart) rollingChart.destroy();
+            
+            if (!rollingMetrics || !rollingMetrics.dates || rollingMetrics.dates.length === 0) {
+                ctx.font = '14px sans-serif';
+                ctx.fillStyle = '#64748b';
+                ctx.textAlign = 'center';
+                ctx.fillText('数据不足，无法计算滚动指标', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                return;
+            }
+            
+            rollingChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: rollingMetrics.dates,
+                    datasets: [
+                        {
+                            label: '滚动年化收益(%)',
+                            data: rollingMetrics.returns,
+                            borderColor: '#4361ee',
+                            backgroundColor: 'transparent',
+                            yAxisID: 'y',
+                            tension: 0.3,
+                            pointRadius: 0,
+                            borderWidth: 2
+                        },
+                        {
+                            label: '年化波动率(%)',
+                            data: rollingMetrics.volatility,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'transparent',
+                            yAxisID: 'y',
+                            tension: 0.3,
+                            pointRadius: 0,
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: { font: { size: 11 } }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            ticks: {
+                                maxTicksLimit: 8,
+                                font: { size: 10 }
+                            }
+                        },
+                        y: {
+                            position: 'left',
+                            ticks: { font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderDrawdownChart(navHistory) {
+            const ctx = document.getElementById('drawdownChart').getContext('2d');
+            
+            if (drawdownChart) drawdownChart.destroy();
+            
+            // 计算回撤序列
+            let maxNav = 0;
+            const drawdowns = navHistory.map(n => {
+                if (n.nav > maxNav) maxNav = n.nav;
+                return ((maxNav - n.nav) / maxNav) * 100;
+            });
+            
+            drawdownChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: navHistory.map(n => n.date),
+                    datasets: [{
+                        label: '回撤(%)',
+                        data: drawdowns,
+                        borderColor: '#dc2626',
+                        backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 0,
+                        borderWidth: 1.5
                     }]
                 },
                 options: {
@@ -419,8 +893,22 @@
                         legend: { display: false }
                     },
                     scales: {
-                        x: { display: false },
-                        y: { beginAtZero: false }
+                        x: {
+                            display: true,
+                            ticks: {
+                                maxTicksLimit: 10,
+                                font: { size: 10 }
+                            }
+                        },
+                        y: {
+                            max: 0,
+                            ticks: {
+                                font: { size: 10 },
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
                     }
                 }
             });

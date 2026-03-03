@@ -2,19 +2,18 @@ package com.fundwise.controller;
 
 import com.fundwise.entity.Fund;
 import com.fundwise.repository.FundRepository;
+import com.fundwise.service.FundMetricsService;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.Period;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
- * 基金详情控制器 - 提供基金详细信息、净值历史、业绩指标
+ * 基金详情控制器 - 提供基金详细分析
+ * 参考 Python 版本的 get_fund_detail 实现
  */
 @RestController
 @RequestMapping("/api/v1/funds")
@@ -22,362 +21,348 @@ import java.util.*;
 public class FundDetailController {
     
     private final FundRepository fundRepository;
+    private final FundMetricsService metricsService;
     private final JdbcTemplate jdbcTemplate;
     
-    public FundDetailController(FundRepository fundRepository, JdbcTemplate jdbcTemplate) {
+    // 交易日常量
+    private static final int TRADING_DAYS_PER_YEAR = 252;
+    private static final double RISK_FREE_RATE = 0.02;
+    
+    // 时间段映射
+    private static final Map<String, Integer> PERIOD_DAYS = Map.of(
+        "1m", 21, "3m", 63, "6m", 126, "1y", 252, "2y", 504, "3y", 756, "all", 9999
+    );
+    
+    public FundDetailController(FundRepository fundRepository,
+                                  FundMetricsService metricsService,
+                                  JdbcTemplate jdbcTemplate) {
         this.fundRepository = fundRepository;
+        this.metricsService = metricsService;
         this.jdbcTemplate = jdbcTemplate;
     }
     
     /**
-     * 获取基金完整详情（含净值历史和业绩指标）
-     * GET /api/v1/funds/{code}/detail
+     * 获取基金详细分析
+     * GET /api/v1/funds/{code}/detail?period=1y
      */
     @GetMapping("/{code}/detail")
-    public ResponseEntity<Map<String, Object>> getFundFullDetail(@PathVariable String code) {
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            // 1. 获取基金基本信息
-            Fund fund = fundRepository.findByFundCode(code)
-                .orElseThrow(() -> new RuntimeException("基金不存在：" + code));
-            
-            Map<String, Object> fundInfo = convertFundToMap(fund);
-            
-            // 2. 获取净值历史（最近一年，最多252个交易日）
-            List<Map<String, Object>> navHistory = getNavHistory(code, 252);
-            fundInfo.put("navHistory", navHistory);
-            
-            // 3. 计算业绩指标
-            Map<String, Object> performance = calculatePerformanceMetrics(code, navHistory);
-            fundInfo.put("performance", performance);
-            
-            // 4. 获取净值统计
-            Map<String, Object> navStats = getNavStats(code);
-            fundInfo.put("navStats", navStats);
-            
-            response.put("success", true);
-            response.put("data", fundInfo);
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.ok(response);
-        }
-    }
-    
-    /**
-     * 获取基金净值历史
-     * GET /api/v1/funds/{code}/nav?limit=100
-     */
-    @GetMapping("/{code}/nav")
-    public ResponseEntity<Map<String, Object>> getFundNavHistory(
-            @PathVariable String code,
-            @RequestParam(defaultValue = "100") int limit,
-            @RequestParam(required = false) String startDate,
-            @RequestParam(required = false) String endDate) {
-        
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            List<Map<String, Object>> navHistory;
-            
-            if (startDate != null && endDate != null) {
-                navHistory = getNavHistoryByDateRange(code, startDate, endDate);
-            } else {
-                navHistory = getNavHistory(code, limit);
-            }
-            
-            response.put("success", true);
-            response.put("data", navHistory);
-            response.put("count", navHistory.size());
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.ok(response);
-        }
-    }
-    
-    /**
-     * 获取基金业绩指标
-     * GET /api/v1/funds/{code}/performance?period=1y
-     */
-    @GetMapping("/{code}/performance")
-    public ResponseEntity<Map<String, Object>> getFundPerformance(
-            @PathVariable String code,
-            @RequestParam(defaultValue = "1y") String period) {
-        
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            // 根据period确定查询的记录数
-            int limit = getLimitByPeriod(period);
-            List<Map<String, Object>> navHistory = getNavHistory(code, limit);
-            
-            Map<String, Object> performance = calculatePerformanceMetrics(code, navHistory);
-            
-            response.put("success", true);
-            response.put("data", performance);
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.ok(response);
-        }
-    }
-    
-    /**
-     * 获取同类基金对比
-     * GET /api/v1/funds/{code}/compare
-     */
-    @GetMapping("/{code}/compare")
-    public ResponseEntity<Map<String, Object>> getFundComparison(@PathVariable String code) {
+    public Map<String, Object> getFundDetail(@PathVariable String code,
+                                              @RequestParam(defaultValue = "1y") String period) {
         Map<String, Object> response = new HashMap<>();
         
         try {
             Fund fund = fundRepository.findByFundCode(code)
                 .orElseThrow(() -> new RuntimeException("基金不存在：" + code));
             
-            String fundType = fund.getFundType();
-            if (fundType == null) {
-                fundType = "混合型";
-            }
+            // 基本信息
+            Map<String, Object> info = convertFundToMap(fund);
             
-            // 获取同类型基金（按规模排序，取前10）
-            String sql = """
-                SELECT fund_code, fund_name, fund_type, risk_level, total_assets,
-                       establishment_date
-                FROM fund
-                WHERE fund_type LIKE ? AND fund_code != ?
-                ORDER BY total_assets DESC
-                LIMIT 10
+            // 获取净值数据
+            String navSql = """
+                SELECT nav_date, nav, accumulated_nav, daily_return
+                FROM fund_nav
+                WHERE fund_code = ?
+                ORDER BY nav_date ASC
             """;
             
-            List<Map<String, Object>> peers = jdbcTemplate.query(sql, (rs, rowNum) -> {
-                Map<String, Object> peer = new HashMap<>();
-                peer.put("code", rs.getString("fund_code"));
-                peer.put("name", rs.getString("fund_name"));
-                peer.put("type", rs.getString("fund_type"));
-                peer.put("riskLevel", rs.getString("risk_level"));
-                peer.put("totalAssets", rs.getDouble("total_assets"));
-                
-                java.sql.Date estDate = rs.getDate("establishment_date");
-                if (estDate != null) {
-                    int years = Period.between(estDate.toLocalDate(), LocalDate.now()).getYears();
-                    peer.put("establishedYears", years);
-                }
-                
-                return peer;
-            }, "%" + fundType.split("-")[0] + "%", code);
+            List<Map<String, Object>> navData = jdbcTemplate.query(navSql, 
+                ps -> ps.setString(1, code),
+                (rs, rowNum) -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("date", rs.getDate("nav_date").toLocalDate().toString());
+                    map.put("nav", rs.getDouble("nav"));
+                    map.put("accumulatedNav", rs.getDouble("accumulated_nav"));
+                    map.put("dailyReturn", rs.getDouble("daily_return"));
+                    return map;
+                });
             
+            if (navData.isEmpty()) {
+                response.put("success", false);
+                response.put("message", "无净值数据");
+                return response;
+            }
+            
+            // 计算各期收益率
+            Map<String, Object> returns = calculatePeriodReturns(navData);
+            
+            // 计算当前周期的风险指标
+            int tradingDays = PERIOD_DAYS.getOrDefault(period, 252);
+            Map<String, Double> riskMetrics = metricsService.calculateMetrics(code, tradingDays);
+            
+            // 获取净值历史（最近500条）
+            List<Map<String, Object>> navHistory = navData.stream()
+                .skip(Math.max(0, navData.size() - 500))
+                .collect(Collectors.toList());
+            
+            // 计算月度收益
+            List<Map<String, Object>> monthlyReturns = calculateMonthlyReturns(navData);
+            
+            // 计算滚动指标
+            Map<String, Object> rollingMetrics = calculateRollingMetrics(navData, 252);
+            
+            // 计算回撤分析
+            Map<String, Object> drawdownAnalysis = calculateDrawdownAnalysis(navData);
+            
+            // 同类排名（简化实现）
+            Map<String, Object> peerRanking = getPeerRanking(code, fund.getFundType(), riskMetrics);
+            
+            // 数据范围
+            Map<String, Object> dataRange = new HashMap<>();
+            dataRange.put("start", navData.get(0).get("date"));
+            dataRange.put("end", navData.get(navData.size() - 1).get("date"));
+            dataRange.put("totalDays", navData.size());
+            
+            // 组装响应
             response.put("success", true);
-            response.put("data", Map.of(
-                "fund", convertFundToMap(fund),
-                "peers", peers,
-                "fundType", fundType,
-                "peersCount", peers.size()
-            ));
-            
-            return ResponseEntity.ok(response);
+            response.put("info", info);
+            response.put("returns", returns);
+            response.put("riskMetrics", formatRiskMetrics(riskMetrics));
+            response.put("navHistory", navHistory);
+            response.put("monthlyReturns", monthlyReturns);
+            response.put("rollingMetrics", rollingMetrics);
+            response.put("drawdownAnalysis", drawdownAnalysis);
+            response.put("peerRanking", peerRanking);
+            response.put("dataRange", dataRange);
+            response.put("period", period);
             
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", e.getMessage());
-            return ResponseEntity.ok(response);
-        }
-    }
-    
-    // ============ 私有方法 ============
-    
-    /**
-     * 获取净值历史
-     */
-    private List<Map<String, Object>> getNavHistory(String fundCode, int limit) {
-        String sql = """
-            SELECT nav_date, nav, accumulated_nav, daily_return
-            FROM fund_nav
-            WHERE fund_code = ?
-            ORDER BY nav_date DESC
-            LIMIT ?
-        """;
-        
-        return jdbcTemplate.query(sql, (rs, rowNum) -> {
-            Map<String, Object> nav = new HashMap<>();
-            nav.put("date", rs.getDate("nav_date").toString());
-            nav.put("nav", rs.getDouble("nav"));
-            nav.put("accumulatedNav", rs.getDouble("accumulated_nav"));
-            nav.put("dailyReturn", rs.getDouble("daily_return"));
-            return nav;
-        }, fundCode, limit);
-    }
-    
-    /**
-     * 按日期范围获取净值历史
-     */
-    private List<Map<String, Object>> getNavHistoryByDateRange(String fundCode, String startDate, String endDate) {
-        String sql = """
-            SELECT nav_date, nav, accumulated_nav, daily_return
-            FROM fund_nav
-            WHERE fund_code = ? AND nav_date BETWEEN ? AND ?
-            ORDER BY nav_date ASC
-        """;
-        
-        return jdbcTemplate.query(sql, (rs, rowNum) -> {
-            Map<String, Object> nav = new HashMap<>();
-            nav.put("date", rs.getDate("nav_date").toString());
-            nav.put("nav", rs.getDouble("nav"));
-            nav.put("accumulatedNav", rs.getDouble("accumulated_nav"));
-            nav.put("dailyReturn", rs.getDouble("daily_return"));
-            return nav;
-        }, fundCode, startDate, endDate);
-    }
-    
-    /**
-     * 获取净值统计
-     */
-    private Map<String, Object> getNavStats(String fundCode) {
-        String sql = """
-            SELECT 
-                COUNT(*) as total_records,
-                MIN(nav_date) as first_date,
-                MAX(nav_date) as last_date,
-                MIN(nav) as min_nav,
-                MAX(nav) as max_nav,
-                AVG(nav) as avg_nav,
-                MAX(accumulated_nav) as max_accumulated_nav
-            FROM fund_nav
-            WHERE fund_code = ?
-        """;
-        
-        return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
-            Map<String, Object> stats = new HashMap<>();
-            stats.put("totalRecords", rs.getInt("total_records"));
-            stats.put("firstDate", rs.getDate("first_date") != null ? rs.getDate("first_date").toString() : null);
-            stats.put("lastDate", rs.getDate("last_date") != null ? rs.getDate("last_date").toString() : null);
-            stats.put("minNav", rs.getDouble("min_nav"));
-            stats.put("maxNav", rs.getDouble("max_nav"));
-            stats.put("avgNav", rs.getDouble("avg_nav"));
-            stats.put("maxAccumulatedNav", rs.getDouble("max_accumulated_nav"));
-            return stats;
-        }, fundCode);
-    }
-    
-    /**
-     * 计算业绩指标
-     */
-    private Map<String, Object> calculatePerformanceMetrics(String fundCode, List<Map<String, Object>> navHistory) {
-        Map<String, Object> metrics = new HashMap<>();
-        
-        if (navHistory == null || navHistory.size() < 2) {
-            metrics.put("error", "净值数据不足，无法计算业绩指标");
-            return metrics;
+            e.printStackTrace();
         }
         
-        // 反转列表（从旧到新）
-        Collections.reverse(navHistory);
+        return response;
+    }
+    
+    /**
+     * 计算各期收益率
+     */
+    private Map<String, Object> calculatePeriodReturns(List<Map<String, Object>> navData) {
+        Map<String, Object> returns = new HashMap<>();
         
-        // 计算收益率
-        double firstNav = (Double) navHistory.get(0).get("nav");
-        double lastNav = (Double) navHistory.get(navHistory.size() - 1).get("nav");
-        double totalReturn = (lastNav - firstNav) / firstNav;
+        int[] periods = {21, 63, 126, 252, 504, 756}; // 1m, 3m, 6m, 1y, 2y, 3y
+        String[] labels = {"return1m", "return3m", "return6m", "return1y", "return2y", "return3y"};
         
-        // 计算年化收益率
-        String firstDate = (String) navHistory.get(0).get("date");
-        String lastDate = (String) navHistory.get(navHistory.size() - 1).get("date");
-        long days = ChronoUnit.DAYS.between(LocalDate.parse(firstDate), LocalDate.parse(lastDate));
-        double years = days / 365.0;
-        double annualizedReturn = years > 0 ? Math.pow(1 + totalReturn, 1.0 / years) - 1 : 0;
-        
-        // 计算最大回撤
-        double maxDrawdown = 0;
-        double peak = firstNav;
-        for (Map<String, Object> nav : navHistory) {
-            double currentNav = (Double) nav.get("nav");
-            if (currentNav > peak) {
-                peak = currentNav;
+        for (int i = 0; i < periods.length; i++) {
+            int days = periods[i];
+            if (navData.size() >= days) {
+                double startNav = (Double) navData.get(navData.size() - days).get("nav");
+                double endNav = (Double) navData.get(navData.size() - 1).get("nav");
+                double ret = (endNav / startNav - 1) * 100;
+                returns.put(labels[i], Math.round(ret * 100.0) / 100.0);
+            } else {
+                returns.put(labels[i], null);
             }
-            double drawdown = (peak - currentNav) / peak;
+        }
+        
+        // 成立以来总收益
+        double startNav = (Double) navData.get(0).get("nav");
+        double endNav = (Double) navData.get(navData.size() - 1).get("nav");
+        double totalReturn = (endNav / startNav - 1) * 100;
+        returns.put("returnTotal", Math.round(totalReturn * 100.0) / 100.0);
+        
+        return returns;
+    }
+    
+    /**
+     * 计算月度收益
+     */
+    private List<Map<String, Object>> calculateMonthlyReturns(List<Map<String, Object>> navData) {
+        // 按月份分组，取每月最后一个交易日净值
+        Map<String, Double> monthlyNav = new LinkedHashMap<>();
+        
+        for (Map<String, Object> nav : navData) {
+            String date = (String) nav.get("date");
+            String month = date.substring(0, 7); // YYYY-MM
+            monthlyNav.put(month, (Double) nav.get("nav"));
+        }
+        
+        // 计算月度收益率
+        List<Map<String, Object>> result = new ArrayList<>();
+        List<String> months = new ArrayList<>(monthlyNav.keySet());
+        
+        for (int i = 1; i < months.size(); i++) {
+            String month = months.get(i);
+            String prevMonth = months.get(i - 1);
+            
+            double currentNav = monthlyNav.get(month);
+            double prevNav = monthlyNav.get(prevMonth);
+            double monthlyReturn = (currentNav / prevNav - 1) * 100;
+            
+            Map<String, Object> item = new HashMap<>();
+            item.put("month", month);
+            item.put("return", Math.round(monthlyReturn * 100.0) / 100.0);
+            result.add(item);
+        }
+        
+        // 返回最近24个月
+        if (result.size() > 24) {
+            return result.subList(result.size() - 24, result.size());
+        }
+        return result;
+    }
+    
+    /**
+     * 计算滚动指标
+     */
+    private Map<String, Object> calculateRollingMetrics(List<Map<String, Object>> navData, int windowSize) {
+        Map<String, Object> result = new HashMap<>();
+        
+        if (navData.size() < windowSize) {
+            result.put("dates", Collections.emptyList());
+            result.put("returns", Collections.emptyList());
+            result.put("volatility", Collections.emptyList());
+            return result;
+        }
+        
+        List<String> dates = new ArrayList<>();
+        List<Double> returns = new ArrayList<>();
+        List<Double> volatility = new ArrayList<>();
+        
+        // 计算滚动收益率和波动率
+        for (int i = windowSize; i < navData.size(); i++) {
+            String date = (String) navData.get(i).get("date");
+            dates.add(date);
+            
+            // 计算窗口期收益率
+            double startNav = (Double) navData.get(i - windowSize).get("nav");
+            double endNav = (Double) navData.get(i).get("nav");
+            double rollingReturn = (endNav / startNav - 1) * 100;
+            returns.add(Math.round(rollingReturn * 100.0) / 100.0);
+            
+            // 计算窗口期波动率
+            List<Double> dailyReturns = new ArrayList<>();
+            for (int j = i - windowSize + 1; j <= i; j++) {
+                double dailyRet = (Double) navData.get(j).get("dailyReturn");
+                if (dailyRet != 0) {
+                    dailyReturns.add(dailyRet);
+                }
+            }
+            
+            if (!dailyReturns.isEmpty()) {
+                double mean = dailyReturns.stream().mapToDouble(Double::doubleValue).average().orElse(0);
+                double variance = dailyReturns.stream()
+                    .mapToDouble(r -> Math.pow(r - mean, 2))
+                    .average().orElse(0);
+                double dailyVol = Math.sqrt(variance);
+                double annualVol = dailyVol * Math.sqrt(252) * 100;
+                volatility.add(Math.round(annualVol * 100.0) / 100.0);
+            } else {
+                volatility.add(0.0);
+            }
+        }
+        
+        // 返回最近250个数据点
+        int limit = Math.min(250, dates.size());
+        if (dates.size() > limit) {
+            result.put("dates", dates.subList(dates.size() - limit, dates.size()));
+            result.put("returns", returns.subList(returns.size() - limit, returns.size()));
+            result.put("volatility", volatility.subList(volatility.size() - limit, volatility.size()));
+        } else {
+            result.put("dates", dates);
+            result.put("returns", returns);
+            result.put("volatility", volatility);
+        }
+        
+        return result;
+    }
+    
+    /**
+     * 计算回撤分析
+     */
+    private Map<String, Object> calculateDrawdownAnalysis(List<Map<String, Object>> navData) {
+        Map<String, Object> result = new HashMap<>();
+        
+        // 计算最大回撤及相关信息
+        double maxNav = 0;
+        double maxDrawdown = 0;
+        String maxDrawdownDate = null;
+        String peakDate = null;
+        
+        for (Map<String, Object> nav : navData) {
+            double currentNav = (Double) nav.get("nav");
+            String date = (String) nav.get("date");
+            
+            if (currentNav > maxNav) {
+                maxNav = currentNav;
+                peakDate = date;
+            }
+            
+            double drawdown = (maxNav - currentNav) / maxNav;
             if (drawdown > maxDrawdown) {
                 maxDrawdown = drawdown;
+                maxDrawdownDate = date;
             }
         }
         
-        // 计算夏普比率
-        List<Double> dailyReturns = new ArrayList<>();
-        for (int i = 1; i < navHistory.size(); i++) {
-            Double prevNav = (Double) navHistory.get(i - 1).get("nav");
-            Double currNav = (Double) navHistory.get(i).get("nav");
-            if (prevNav != null && currNav != null && prevNav > 0) {
-                dailyReturns.add((currNav - prevNav) / prevNav);
-            }
+        result.put("maxDrawdown", Math.round(maxDrawdown * 10000.0) / 100.0); // 百分比
+        result.put("maxDrawdownDate", maxDrawdownDate);
+        result.put("peakDate", peakDate);
+        
+        // 计算当前回撤
+        double currentNav = (Double) navData.get(navData.size() - 1).get("nav");
+        double currentMax = 0;
+        for (Map<String, Object> nav : navData) {
+            double n = (Double) nav.get("nav");
+            if (n > currentMax) currentMax = n;
         }
+        double currentDrawdown = (currentMax - currentNav) / currentMax * 100;
+        result.put("currentDrawdown", Math.round(currentDrawdown * 100.0) / 100.0);
         
-        double sharpeRatio = 0;
-        if (!dailyReturns.isEmpty()) {
-            double avgDailyReturn = dailyReturns.stream().mapToDouble(Double::doubleValue).average().orElse(0);
-            double variance = dailyReturns.stream()
-                .mapToDouble(r -> Math.pow(r - avgDailyReturn, 2))
-                .average().orElse(0);
-            double dailyVolatility = Math.sqrt(variance);
-            double annualVolatility = dailyVolatility * Math.sqrt(252);
-            double riskFreeRate = 0.03; // 3% 无风险利率
-            sharpeRatio = annualVolatility > 0 ? (annualizedReturn - riskFreeRate) / annualVolatility : 0;
-        }
-        
-        // 计算波动率
-        double volatility = 0;
-        if (!dailyReturns.isEmpty()) {
-            double avgReturn = dailyReturns.stream().mapToDouble(Double::doubleValue).average().orElse(0);
-            double variance = dailyReturns.stream()
-                .mapToDouble(r -> Math.pow(r - avgReturn, 2))
-                .average().orElse(0);
-            volatility = Math.sqrt(variance) * Math.sqrt(252);
-        }
-        
-        // 胜率
-        long winDays = dailyReturns.stream().filter(r -> r > 0).count();
-        double winRate = dailyReturns.size() > 0 ? (double) winDays / dailyReturns.size() : 0;
-        
-        // 构建结果
-        metrics.put("totalReturn", round(totalReturn, 4));
-        metrics.put("annualizedReturn", round(annualizedReturn, 4));
-        metrics.put("maxDrawdown", round(maxDrawdown, 4));
-        metrics.put("sharpeRatio", round(sharpeRatio, 2));
-        metrics.put("volatility", round(volatility, 4));
-        metrics.put("winRate", round(winRate, 4));
-        metrics.put("totalDays", navHistory.size());
-        metrics.put("tradingDays", dailyReturns.size());
-        metrics.put("startDate", firstDate);
-        metrics.put("endDate", lastDate);
-        
-        return metrics;
+        return result;
     }
     
     /**
-     * 根据period参数获取记录数限制
+     * 获取同类排名（简化实现）
      */
-    private int getLimitByPeriod(String period) {
-        return switch (period) {
-            case "1m" -> 22;
-            case "3m" -> 66;
-            case "6m" -> 132;
-            case "1y" -> 252;
-            case "3y" -> 756;
-            case "5y" -> 1260;
-            case "all" -> 10000;
-            default -> 252;
-        };
+    private Map<String, Object> getPeerRanking(String fundCode, String fundType, Map<String, Double> metrics) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // 获取同类型基金数量
+            String countSql = "SELECT COUNT(*) FROM fund WHERE fund_type LIKE ? AND nav_record_count > 0";
+            Integer totalPeers = jdbcTemplate.queryForObject(countSql, 
+                Integer.class, "%" + (fundType != null ? fundType.split("-")[0] : "") + "%");
+            
+            result.put("peerCount", totalPeers != null ? totalPeers : 0);
+            
+            // 简化排名计算（基于收益率分位）
+            double returnRate = metrics.getOrDefault("totalReturn", 0.0);
+            String rankLevel = returnRate > 0.1 ? "优秀" : returnRate > 0 ? "良好" : "一般";
+            result.put("rankLevel", rankLevel);
+            
+        } catch (Exception e) {
+            result.put("peerCount", 0);
+            result.put("rankLevel", "--");
+        }
+        
+        return result;
     }
     
     /**
-     * 转换Fund实体为Map
+     * 格式化风险指标
+     */
+    private Map<String, Object> formatRiskMetrics(Map<String, Double> metrics) {
+        Map<String, Object> formatted = new HashMap<>();
+        
+        // 收益率指标（转为百分比）
+        formatted.put("returnPeriod", round(metrics.getOrDefault("totalReturn", 0.0) * 100, 2));
+        formatted.put("annualReturn", round(metrics.getOrDefault("annualizedReturn", 0.0) * 100, 2));
+        
+        // 风险指标
+        formatted.put("maxDrawdown", round(metrics.getOrDefault("maxDrawdown", 0.0) * 100, 2));
+        formatted.put("volatility", round(metrics.getOrDefault("volatility", 0.0) * 100, 2));
+        
+        // 风险调整收益
+        formatted.put("sharpeRatio", round(metrics.getOrDefault("sharpeRatio", 0.0), 2));
+        formatted.put("calmarRatio", round(metrics.getOrDefault("calmarRatio", 0.0), 2));
+        formatted.put("winRate", round(metrics.getOrDefault("winRate", 0.0) * 100, 2));
+        
+        return formatted;
+    }
+    
+    /**
+     * 将 Fund 实体转换为 Map
      */
     private Map<String, Object> convertFundToMap(Fund fund) {
         Map<String, Object> map = new HashMap<>();
@@ -388,11 +373,12 @@ public class FundDetailController {
         map.put("riskLevel", fund.getRiskLevel());
         map.put("totalAssets", fund.getTotalAssets());
         map.put("isIndexFund", fund.getIsIndexFund());
+        map.put("establishmentDate", fund.getEstablishmentDate() != null 
+            ? fund.getEstablishmentDate().toString() : null);
         map.put("managementFeeRate", fund.getManagementFeeRate());
         map.put("custodianFeeRate", fund.getCustodianFeeRate());
         
         if (fund.getEstablishmentDate() != null) {
-            map.put("establishmentDate", fund.getEstablishmentDate().toString());
             int years = Period.between(fund.getEstablishmentDate(), LocalDate.now()).getYears();
             map.put("establishedYears", years);
         }
@@ -404,6 +390,8 @@ public class FundDetailController {
      * 四舍五入
      */
     private double round(double value, int places) {
-        return BigDecimal.valueOf(value).setScale(places, RoundingMode.HALF_UP).doubleValue();
+        if (Double.isNaN(value) || Double.isInfinite(value)) return 0;
+        long factor = (long) Math.pow(10, places);
+        return Math.round(value * factor) / (double) factor;
     }
 }

@@ -3,6 +3,7 @@ package com.fundwise.service;
 import com.fundwise.entity.Fund;
 import com.fundwise.repository.FundRepository;
 import org.springframework.stereotype.Service;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.math.BigDecimal;
@@ -644,26 +645,148 @@ public class RecommendationService {
     }
     
     /**
-     * 计算回测数据（模拟，后续应接入真实回测引擎）
+     * 计算回测数据（基于真实净值）
      */
     public Map<String, Object> calculateBacktestResult(List<Map<String, Object>> portfolio, 
                                                      double initialCapital, 
                                                      int investmentPeriod) {
         Map<String, Object> backtest = new HashMap<>();
         
-        // 这里使用模拟数据，后续应接入真实回测引擎
-        double simulatedReturn = 0.35; // 模拟35%收益
-        double annualizedReturn = 0.085;
+        // 计算回测日期范围
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusYears(investmentPeriod);
         
-        backtest.put("startDate", "2021-01-01");
-        backtest.put("endDate", "2024-01-01");
-        backtest.put("initialCapital", initialCapital);
-        backtest.put("finalValue", initialCapital * (1 + simulatedReturn));
-        backtest.put("annualizedReturn", annualizedReturn);
-        backtest.put("maxDrawdown", 0.135);
-        backtest.put("sharpeRatio", 1.2);
-        backtest.put("benchmarkReturn", 0.045);
-        backtest.put("portfolioCount", portfolio.size());
+        // 计算组合的加权日收益率
+        double totalWeight = portfolio.stream()
+            .mapToDouble(f -> (Double) f.get("weight"))
+            .sum();
+        
+        // 获取所有基金代码
+        List<String> fundCodes = portfolio.stream()
+            .map(f -> (String) f.get("code"))
+            .collect(Collectors.toList());
+        
+        // 获取净值数据并计算组合表现
+        try {
+            Map<String, Double> weights = new HashMap<>();
+            for (Map<String, Object> fund : portfolio) {
+                weights.put((String) fund.get("code"), (Double) fund.get("weight") / totalWeight);
+            }
+            
+            // 查询所有基金的净值
+            String inClause = fundCodes.stream().map(c -> "'" + c + "'").collect(Collectors.joining(","));
+            String sql = String.format("""
+                SELECT fund_code, nav_date, nav, daily_return
+                FROM fund_nav
+                WHERE fund_code IN (%s)
+                AND nav_date >= '%s'
+                AND nav_date <= '%s'
+                ORDER BY nav_date ASC
+            """, inClause, startDate, endDate);
+            
+            // 按日期汇总组合收益率
+            Map<LocalDate, Double> dailyReturns = new TreeMap<>();
+            Map<LocalDate, Map<String, Double>> fundReturnsByDate = new HashMap<>();
+            
+            jdbcTemplate.query(sql, rs -> {
+                String fundCode = rs.getString("fund_code");
+                LocalDate date = rs.getDate("nav_date").toLocalDate();
+                double dailyReturn = rs.getDouble("daily_return");
+                if (rs.wasNull()) {
+                    dailyReturn = 0;
+                }
+                
+                fundReturnsByDate.computeIfAbsent(date, d -> new HashMap<>())
+                    .put(fundCode, dailyReturn);
+            });
+            
+            // 计算组合每日收益率
+            for (Map.Entry<LocalDate, Map<String, Double>> entry : fundReturnsByDate.entrySet()) {
+                LocalDate date = entry.getKey();
+                Map<String, Double> returns = entry.getValue();
+                
+                double portfolioReturn = 0;
+                for (Map.Entry<String, Double> fundEntry : returns.entrySet()) {
+                    Double weight = weights.get(fundEntry.getKey());
+                    if (weight != null) {
+                        portfolioReturn += fundEntry.getValue() * weight;
+                    }
+                }
+                dailyReturns.put(date, portfolioReturn);
+            }
+            
+            // 计算累计净值和各项指标
+            List<Double> returnList = new ArrayList<>(dailyReturns.values());
+            double cumulativeNav = 1.0;
+            List<Double> navList = new ArrayList<>();
+            
+            for (Double ret : returnList) {
+                cumulativeNav *= (1 + ret);
+                navList.add(cumulativeNav);
+            }
+            
+            // 最终市值
+            double finalValue = initialCapital * cumulativeNav;
+            
+            // 总收益率
+            double totalReturn = cumulativeNav - 1;
+            
+            // 年化收益率
+            double years = investmentPeriod;
+            double annualizedReturn = years > 0 ? Math.pow(cumulativeNav, 1.0 / years) - 1 : 0;
+            
+            // 最大回撤
+            double maxNav = 1.0;
+            double maxDrawdown = 0;
+            for (Double nav : navList) {
+                if (nav > maxNav) maxNav = nav;
+                double dd = (maxNav - nav) / maxNav;
+                if (dd > maxDrawdown) maxDrawdown = dd;
+            }
+            
+            // 波动率（年化）
+            double avgReturn = returnList.stream().mapToDouble(Double::doubleValue).average().orElse(0);
+            double variance = returnList.stream()
+                .mapToDouble(r -> Math.pow(r - avgReturn, 2))
+                .average().orElse(0);
+            double volatility = Math.sqrt(variance) * Math.sqrt(252);
+            
+            // 夏普比率
+            double sharpeRatio = volatility > 0 ? (annualizedReturn - 0.03) / volatility : 0;
+            
+            // 胜率
+            long winDays = returnList.stream().filter(r -> r > 0).count();
+            double winRate = returnList.size() > 0 ? (double) winDays / returnList.size() : 0;
+            
+            backtest.put("startDate", startDate.toString());
+            backtest.put("endDate", endDate.toString());
+            backtest.put("initialCapital", initialCapital);
+            backtest.put("finalValue", finalValue);
+            backtest.put("totalReturn", totalReturn);
+            backtest.put("annualizedReturn", annualizedReturn);
+            backtest.put("maxDrawdown", maxDrawdown);
+            backtest.put("sharpeRatio", sharpeRatio);
+            backtest.put("volatility", volatility);
+            backtest.put("winRate", winRate);
+            backtest.put("benchmarkReturn", 0.045);
+            backtest.put("portfolioCount", portfolio.size());
+            backtest.put("tradingDays", returnList.size());
+            
+        } catch (Exception e) {
+            // 出错时返回默认值
+            System.err.println("计算回测失败: " + e.getMessage());
+            backtest.put("startDate", startDate.toString());
+            backtest.put("endDate", endDate.toString());
+            backtest.put("initialCapital", initialCapital);
+            backtest.put("finalValue", initialCapital);
+            backtest.put("totalReturn", 0.0);
+            backtest.put("annualizedReturn", 0.0);
+            backtest.put("maxDrawdown", 0.0);
+            backtest.put("sharpeRatio", 0.0);
+            backtest.put("volatility", 0.0);
+            backtest.put("winRate", 0.0);
+            backtest.put("portfolioCount", portfolio.size());
+        }
         
         return backtest;
     }
