@@ -87,12 +87,13 @@ public class FundScreenerService {
         // 第四步：排序
         sortFunds(fundsWithMetrics, filters.sortBy, filters.sortOrder);
         
-        // 第五步：分页
+        // 第五步：分页（支持 page=0 和 page=1 两种习惯）
         int total = fundsWithMetrics.size();
-        int fromIndex = (filters.page - 1) * filters.pageSize;
+        int pageNum = filters.page <= 0 ? 0 : filters.page - 1; // 兼容 page=0
+        int fromIndex = pageNum * filters.pageSize;
         int toIndex = Math.min(fromIndex + filters.pageSize, total);
         
-        List<Map<String, Object>> pagedResults = fromIndex < total 
+        List<Map<String, Object>> pagedResults = (fromIndex >= 0 && fromIndex < total)
             ? fundsWithMetrics.subList(fromIndex, toIndex) 
             : Collections.emptyList();
         
